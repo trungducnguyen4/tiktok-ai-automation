@@ -105,7 +105,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
             "file_size": f"{sz_mb} MB",
             "has_audio": True,
             "has_subtitles": True,
-            "voice_name": "Hoài My (Edge-TTS)"
+            "voice_name": "Google Flow Native (Tích hợp Prompt)"
         })
         add_log(f"-> Video 30s hoàn chỉnh (kèm thuyết minh AI và chữ chạy) đã được xuất tại: {final_video_path}", level="success")
 

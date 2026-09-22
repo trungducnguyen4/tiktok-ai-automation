@@ -19,11 +19,12 @@
 2. **🎨 Tạo video hoạt hình 2D qua Google Flow (Omni 1.1 Flash):**
    * Tự động thiết lập thông số chuẩn: Tỷ lệ dọc **9:16**, Độ phân giải **720p**, Thời lượng **10s**, Chế độ **Ingredients**.
    * **Cơ chế Reference Chaining (`+ Add reference`):** Tự động đưa clip trước vào làm reference cho clip sau để đảm bảo phong cách hình ảnh và nhân vật nhất quán xuyên suốt.
+   * **Nhận diện thương hiệu (`brainmoney.jpg`):** Tự động gắn asset thương hiệu vào Clip 3 (cảnh kết thúc) và hiển thị logo chuyển động phát sáng mượt mà.
+   * **Quy tắc định danh khi thư viện lớn:** Bot bắt chính xác 100% video vừa sinh ra qua Network Stream Response mới nhất và Tile State đầu Canvas, không bao giờ nhầm lẫn với các clip cũ.
 
-3. **🎙️ Giọng đọc thuyết minh AI & Chữ chạy chuẩn TikTok:**
-   * **Voiceover:** Tích hợp `edge-tts` với giọng đọc nữ truyền cảm tiếng Việt chuẩn TikTok (`vi-VN-HoaiMyNeural`), có cơ chế dự phòng `gTTS`.
-   * **Kinetic Subtitles:** Chữ chạy màu vàng tươi (`#FFE600`) viền đen dày (`stroke_width=4`), font Segoe UI Bold, đặt tại vùng an toàn 73% chiều cao màn hình.
-   * **Web FastStart:** Tự động đưa `moov` atom lên đầu file MP4 giúp video phát tức thì trên mọi trình duyệt.
+3. **🎙️ Nhúng Lời Thoại & Chữ Chạy Trực Tiếp Vào Prompt:**
+   * **Prompt tích hợp 3-trong-1:** Mỗi prompt gửi cho Google Flow chứa đầy đủ: mô tả visual 2D tối giản + lời thuyết minh tiếng Việt (`Spoken Vietnamese voiceover audio: "..."`) + chỉ dẫn phụ đề TikTok (`On-screen kinetic TikTok subtitles in bold yellow font with black outline: "..."`). AI của Google tự tổng hợp giọng nói và chữ trực tiếp trong video.
+   * **Web FastStart & Tương thích phát tức thì:** Tự động đưa `moov` atom lên đầu file MP4 giúp video phát mượt mà trên Dashboard và TikTok.
 
 4. **📱 Tự động xuất bản lên TikTok Studio:**
    * Tải video 30s hoàn chỉnh lên TikTok Creator Center.

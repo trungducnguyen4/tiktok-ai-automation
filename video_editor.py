@@ -30,7 +30,8 @@ def stitch_videos(
     voiceovers: list[str] = None,
     captions: list[str] = None,
     topic: str = None,
-    output_filename: str = "final_tiktok_video.mp4"
+    output_filename: str = "final_tiktok_video.mp4",
+    render_external_elements: bool = False
 ) -> str:
     """
     Nối 3 video clip 10s thành 1 video 30s hoàn chỉnh chuẩn TikTok:
@@ -65,10 +66,14 @@ def stitch_videos(
         w, h = stitched.size
         add_log(f"-> Đã ghép nối xong hình ảnh: kích thước {w}x{h}, tổng độ dài {round(total_duration, 1)}s", level="success")
 
-        # 2. Tạo và lồng giọng đọc AI nếu có danh sách voiceovers
+        # 2. Xử lý âm thanh
         temp_audio_file = config.DOWNLOADS_DIR / "temp_pipeline_voiceover.mp3"
-        if voiceovers and len(voiceovers) >= 1:
-            add_log("-> Đang tạo track thuyết minh AI đồng bộ theo từng phân cảnh...", level="info")
+        has_native_audio = stitched.audio is not None
+
+        if has_native_audio and not render_external_elements:
+            add_log("-> Giữ nguyên vẹn âm thanh lời thoại sinh trực tiếp từ Google Flow (Omni 1.1)!", level="success")
+        elif voiceovers and len(voiceovers) >= 1:
+            add_log("-> Đang tạo track thuyết minh AI đồng bộ theo từng phân cảnh (dự phòng)...", level="info")
             audio_track_path = create_synchronized_audio_track(
                 voiceovers=voiceovers,
                 segment_durations=segment_durations,
@@ -78,48 +83,49 @@ def stitch_videos(
                 final_audio_clip = AudioFileClip(audio_track_path)
                 stitched = stitched.with_audio(final_audio_clip)
                 add_log("-> ĐÃ LỒNG TRACK GIỌNG ĐỌC AI VÀO VIDEO THÀNH CÔNG!", level="success")
+
+        # 3. Tạo chữ chạy / phụ đề TikTok (chỉ kích hoạt nếu render_external_elements=True)
+        if render_external_elements:
+            font_path = get_vietnamese_font()
+            add_log(f"-> Đang tạo chữ chạy phụ đề phong cách TikTok (Font: {Path(font_path).stem})...", level="info")
+
+            # 3a. Header badge cố định trên cùng: Chủ đề video
+            if topic:
+                short_topic = topic.strip().upper()
+                if len(short_topic) > 30:
+                    short_topic = short_topic[:30] + "..."
+                top_badge = TextClip(
+                    text=f"• {short_topic} •",
+                    font=font_path,
+                    font_size=28,
+                    color="#00FFFF",
+                    stroke_color="black",
+                    stroke_width=3
+                ).with_position(("center", int(h * 0.07))).with_duration(total_duration)
+                text_clips.append(top_badge)
+
+            # 3b. Phụ đề chữ chạy theo từng phân cảnh ở vùng an toàn TikTok (y = 73% chiều cao)
+            if captions and len(captions) >= 1:
+                current_start = 0.0
+                for idx, cap_text in enumerate(captions[:len(loaded_clips)]):
+                    dur = loaded_clips[idx].duration
+                    clean_cap = cap_text.strip().upper()
+                    if clean_cap:
+                        caption_clip = TextClip(
+                            text=clean_cap,
+                            font=font_path,
+                            font_size=38,
+                            color="#FFE600",
+                            stroke_color="black",
+                            stroke_width=4,
+                            method="caption",
+                            size=(w - 90, None)
+                        ).with_position(("center", int(h * 0.73))).with_start(current_start + 0.3).with_duration(dur - 0.5)
+                        text_clips.append(caption_clip)
+                        add_log(f"   [Chữ chạy Cảnh {idx + 1}] \"{clean_cap}\" ({round(current_start, 1)}s -> {round(current_start + dur, 1)}s)", level="info")
+                    current_start += dur
         else:
-            add_log("Không có dữ liệu voiceovers, giữ âm thanh gốc của clips.", level="info")
-
-        # 3. Tạo chữ chạy / phụ đề TikTok (Kinetic Subtitles)
-        font_path = get_vietnamese_font()
-        add_log(f"-> Đang tạo chữ chạy phụ đề phong cách TikTok (Font: {Path(font_path).stem})...", level="info")
-
-        # 3a. Header badge cố định trên cùng: Chủ đề video
-        if topic:
-            short_topic = topic.strip().upper()
-            if len(short_topic) > 30:
-                short_topic = short_topic[:30] + "..."
-            top_badge = TextClip(
-                text=f"• {short_topic} •",
-                font=font_path,
-                font_size=28,
-                color="#00FFFF",
-                stroke_color="black",
-                stroke_width=3
-            ).with_position(("center", int(h * 0.07))).with_duration(total_duration)
-            text_clips.append(top_badge)
-
-        # 3b. Phụ đề chữ chạy theo từng phân cảnh ở vùng an toàn TikTok (y = 73% chiều cao)
-        if captions and len(captions) >= 1:
-            current_start = 0.0
-            for idx, cap_text in enumerate(captions[:len(loaded_clips)]):
-                dur = loaded_clips[idx].duration
-                clean_cap = cap_text.strip().upper()
-                if clean_cap:
-                    caption_clip = TextClip(
-                        text=clean_cap,
-                        font=font_path,
-                        font_size=38,
-                        color="#FFE600",       # Vàng tươi chuẩn TikTok
-                        stroke_color="black",  # Viền đen dày để nổi bật trên mọi nền
-                        stroke_width=4,
-                        method="caption",
-                        size=(w - 90, None)
-                    ).with_position(("center", int(h * 0.73))).with_start(current_start + 0.3).with_duration(dur - 0.5)
-                    text_clips.append(caption_clip)
-                    add_log(f"   [Chữ chạy Cảnh {idx + 1}] \"{clean_cap}\" ({round(current_start, 1)}s -> {round(current_start + dur, 1)}s)", level="info")
-                current_start += dur
+            add_log("-> Phụ đề chữ chạy & Lời thoại đã được sinh trực tiếp trên khung hình bởi Google Flow!", level="info")
 
         # 4. Tổng hợp video hoàn chỉnh
         if text_clips:

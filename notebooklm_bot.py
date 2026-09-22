@@ -7,18 +7,11 @@ from logger import add_log
 
 PROMPT_TEMPLATE = """Hãy chọn 1 chủ đề ngẫu nhiên từ tài liệu notebook này về tâm lý học hành vi hoặc tài chính, sau đó viết kịch bản hoàn chỉnh gồm chính xác 3 phân cảnh (mỗi phân cảnh 10 giây, tổng video 30 giây) để làm video ngắn TikTok.
 
-YÊU CẦU CHO MỖI PHÂN CẢNH (CẢNH 1, 2, 3):
-1. PROMPT HÌNH ẢNH (BẰNG TIẾNG ANH):
-   - Phong cách BẮT BUỘC: HÌNH ẢNH HOẠT HÌNH 2D CƠ BẢN, ĐƠN GIẢN, PHẲNG (Clean 2D flat animation, simple minimalist vector art, minimal pastel background, smooth basic 2D motion graphics).
-   - KHÔNG dùng phong cách điện ảnh (cinematic), KHÔNG tả quá chi tiết phức tạp, KHÔNG tả người thật (photorealistic/live action).
-   - Mô tả ngắn gọn (1-2 câu tiếng Anh) minh họa trực quan khái niệm tài chính hoặc tâm lý học hành vi.
-2. LỜI BÌNH / GIỌNG ĐỌC THUYẾT MINH (VOICEOVER BẰNG TIẾNG VIỆT):
-   - Viết 1-2 câu tiếng Việt ngắn gọn, văn phong nói tự nhiên, hấp dẫn, cuốn hút người xem TikTok.
-   - Thời lượng đọc vừa vặn khoảng 8-10 giây cho mỗi cảnh.
-3. CHỮ CHẠY / TIÊU ĐỀ PHỤ ĐỀ (CAPTION BẰNG TIẾNG VIỆT):
-   - 1 câu phụ đề ngắn nổi bật (dưới 10 chữ, viết hoa hoặc giật tít) để hiện chữ chạy trên video TikTok.
-
-Đồng thời tạo 1 tiêu đề video TikTok ngắn gọn, cuốn hút và danh sách 5 hashtag thịnh hành liên quan.
+YÊU CẦU ĐẶC BIỆT CHO MỖI PHÂN CẢNH (CẢNH 1, 2, 3):
+Mỗi prompt video gửi cho AI tạo video (Google Flow Omni 1.1) BẮT BUỘC PHẢI TÍCH HỢP ĐỦ CẢ 3 THÀNH PHẦN trong một chuỗi văn bản:
+1. HÌNH ẢNH HOẠT HÌNH 2D ĐƠN GIẢN (BẰNG TIẾNG ANH): Clean 2D flat animation, minimal vector art, pastel background, smooth basic motion graphics. (Tuyệt đối không dùng phong cách điện ảnh/cinematic/người thật).
+2. LỜI BÌNH / GIỌNG ĐỌC THUYẾT MINH TIẾNG VIỆT: Tự nhiên, ngắn gọn (8-10 giây cho mỗi cảnh), viết dưới dạng: Spoken Vietnamese voiceover audio: "[lời thoại tiếng Việt cuốn hút]"
+3. CHỮ CHẠY / TIÊU ĐỀ PHỤ ĐỀ TIKTOK: Viết dưới dạng: On-screen kinetic TikTok subtitles in bold yellow font with black outline: "[CÂU PHỤ ĐỀ NỔI BẬT]"
 
 BẮT BUỘC trả về kết quả dưới định dạng JSON duy nhất, không thêm lời chào hay giải thích ngoài JSON:
 {
@@ -26,9 +19,9 @@ BẮT BUỘC trả về kết quả dưới định dạng JSON duy nhất, khô
   "title": "Tiêu đề video TikTok giật tít",
   "hashtags": ["#hashtag1", "#hashtag2", "#hashtag3", "#hashtag4", "#hashtag5"],
   "prompts": [
-    "Simple 2D flat vector animation of [mô tả ngắn gọn đồ họa 2d bằng tiếng Anh] (10s)",
-    "Simple 2D flat vector animation of [mô tả ngắn gọn đồ họa 2d bằng tiếng Anh] (10s)",
-    "Simple 2D flat vector animation of [mô tả ngắn gọn đồ họa 2d bằng tiếng Anh] (10s)"
+    "Simple 2D flat vector animation of [mô tả đồ họa 2d bằng tiếng Anh]. Spoken Vietnamese voiceover audio: \\"[Lời đọc tiếng Việt đoạn 1]\\". On-screen kinetic TikTok subtitles in bold yellow font with black outline: \\"[PHỤ ĐỀ NỔI BẬT 1]\\". (10s)",
+    "Simple 2D flat vector animation of [mô tả đồ họa 2d bằng tiếng Anh]. Spoken Vietnamese voiceover audio: \\"[Lời đọc tiếng Việt đoạn 2]\\". On-screen kinetic TikTok subtitles in bold yellow font with black outline: \\"[PHỤ ĐỀ NỔI BẬT 2]\\". (10s)",
+    "Simple 2D flat vector animation of [mô tả đồ họa 2d bằng tiếng Anh]. Spoken Vietnamese voiceover audio: \\"[Lời đọc tiếng Việt đoạn 3]\\". On-screen kinetic TikTok subtitles in bold yellow font with black outline: \\"[PHỤ ĐỀ NỔI BẬT 3]\\". (10s)"
   ],
   "voiceovers": [
     "Lời đọc thuyết minh tiếng Việt cho đoạn 1...",
@@ -88,6 +81,25 @@ def is_valid_script_data(data: dict) -> bool:
             "LÀM CHỦ TƯ DUY TÀI CHÍNH!"
         ]
 
+    # Đảm bảo 100% mỗi prompt gửi sang Google Flow đều nhúng đầy đủ lời thoại và chữ chạy trực tiếp
+    formatted_prompts = []
+    for idx, p in enumerate(data.get("prompts", [])[:3]):
+        p_str = p.strip()
+        vo = data["voiceovers"][idx] if idx < len(data["voiceovers"]) else ""
+        cap = data["captions"][idx] if idx < len(data["captions"]) else ""
+
+        if "spoken vietnamese voiceover" not in p_str.lower() and vo:
+            p_str += f' Spoken Vietnamese voiceover audio: "{vo}".'
+
+        if "on-screen kinetic tiktok subtitles" not in p_str.lower() and cap:
+            p_str += f' On-screen kinetic TikTok subtitles in bold yellow font with black outline: "{cap}".'
+
+        if "(10s)" not in p_str:
+            p_str += " (10s)"
+
+        formatted_prompts.append(p_str)
+    data["prompts"] = formatted_prompts
+
     return True
 
 def extract_json_robust(text: str) -> dict | None:
@@ -131,9 +143,9 @@ def get_vetted_fallback() -> dict:
             "#MeoTietKiem"
         ],
         "prompts": [
-            "Simple 2D flat vector animation of a colorful piggy bank splitting into three separate labeled glass jars for salary, bonus, and gift money on a minimal pastel background (10s)",
-            "Simple 2D flat vector animation of a hand quickly spending money from a bonus jar on shopping icons while carefully locking the salary jar in a vault (10s)",
-            "Simple 2D flat vector animation of three separate money jars merging into one single unified gold coin icon to show all money has equal value (10s)"
+            "Simple 2D flat vector animation of a colorful piggy bank splitting into three separate labeled glass jars for salary, bonus, and gift money on a minimal pastel background. Spoken Vietnamese voiceover audio: \"Tại sao tiền thưởng Tết ta tiêu rất nhanh, còn tiền lương hàng tháng lại nâng niu từng đồng?\". On-screen kinetic TikTok subtitles in bold yellow font with black outline: \"BẪY KẾ TOÁN TÂM LÝ!\". (10s)",
+            "Simple 2D flat vector animation of a hand quickly spending money from a bonus jar on shopping icons while carefully locking the salary jar in a vault. Spoken Vietnamese voiceover audio: \"Đó chính là Kế toán tâm lý! Não bộ tự chia tiền vào các ngăn vô hình và đối xử không công bằng với chúng.\". On-screen kinetic TikTok subtitles in bold yellow font with black outline: \"TIỀN NÀO CŨNG LÀ TIỀN CỦA BẠN!\". (10s)",
+            "Simple 2D flat vector animation of three separate money jars merging into one single unified gold coin icon to show all money has equal value. Spoken Vietnamese voiceover audio: \"Hãy nhớ: Mọi đồng tiền đều có giá trị ngang nhau. Đừng để cảm xúc đánh lừa chiếc ví của bạn!\". On-screen kinetic TikTok subtitles in bold yellow font with black outline: \"TẬP TRUNG VÀO GIÁ TRỊ THỰC!\". (10s)"
         ],
         "voiceovers": [
             "Tại sao tiền thưởng Tết ta tiêu rất nhanh, còn tiền lương hàng tháng lại nâng niu từng đồng?",

@@ -159,11 +159,51 @@ def attach_previous_video_as_reference(page, ref_clip_index: int) -> bool:
         page.keyboard.press("Escape")
     return False
 
+def attach_brand_icon_ingredient(page, asset_name: str = "brainmoney.jpg") -> bool:
+    """
+    Gắn asset thương hiệu (brainmoney.jpg) làm Reference/Ingredient cho Clip 3 (Cảnh kết thúc)
+    """
+    try:
+        add_log(f"-> Đang gắn icon thương hiệu '{asset_name}' làm Reference cho phân cảnh kết...", level="info")
+        is_menu_open = page.evaluate('''() => {
+            const item = Array.from(document.querySelectorAll('.asset-title')).find(e => e.innerText.includes('brainmoney'));
+            return !!item;
+        }''')
+        if not is_menu_open:
+            page.evaluate('''() => {
+                const btn = document.querySelector("button[aria-label='Add ingredients to the prompt box'], .add-menu-trigger");
+                if (btn) btn.click();
+            }''')
+            time.sleep(0.8)
+
+        success = page.evaluate('''(name) => {
+            const item = Array.from(document.querySelectorAll('.asset-title')).find(e => e.innerText.includes(name) || e.innerText.toLowerCase().includes('brainmoney'));
+            if (!item) return false;
+            const btn = item.closest('button') || item;
+            btn.click();
+            return true;
+        }''', asset_name)
+
+        if success:
+            time.sleep(0.5)
+            page.keyboard.press("Escape")
+            add_log(f"-> ĐÃ GẮN THÀNH CÔNG ICON '{asset_name}' VÀO PROMPT BOX LÀM REFERENCE!", level="success")
+            return True
+        else:
+            add_log(f"Không tìm thấy asset '{asset_name}' trong thư viện Google Flow.", level="warning")
+            page.keyboard.press("Escape")
+    except Exception as e:
+        add_log(f"Lỗi khi gắn brand icon: {e}", level="warning")
+        page.keyboard.press("Escape")
+    return False
+
 def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str]:
     """
     Tự động áp dụng setting (Video, Ingredients, 9:16, 720p, 10s, x1),
     sau đó dán 3 prompt kịch bản và bấm Start generation!
     Tự động gắn Clip trước làm Reference cho Clip sau để giữ tính nhất quán nhân vật và hình ảnh.
+    Đặc biệt ở Clip 3: Tự động gắn thêm asset thương hiệu brainmoney.jpg làm Reference.
+    Áp dụng quy tắc định danh chính xác video đang làm kể cả khi thư viện canvas đã rất lớn.
     """
     add_log(f"=== BƯỚC 2/4: CHUYỂN TIẾP SANG GOOGLE FLOW (OMNI 1.1) ===", level="info")
     downloaded_files = []
@@ -205,18 +245,26 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
 
         # 4. Lần lượt gửi từng prompt vào ô nhập và bấm Start generation
         for idx, prompt_text in enumerate(prompts):
-            # Nếu là clip 2 hoặc clip 3: Gắn clip trước đó làm reference/ingredient
-            if idx > 0:
-                attach_previous_video_as_reference(flow_page, ref_clip_index=idx)
-            else:
-                # Với clip 1: Đảm bảo ô prompt sạch sẽ không có reference rác cũ
+            # Xử lý Reference tương ứng từng phân cảnh:
+            if idx == 0:
+                # Clip 1: Dọn sạch reference cũ
                 clear_prompt_box_ingredients(flow_page)
+            elif idx == 1:
+                # Clip 2: Gắn Clip 1 làm reference
+                attach_previous_video_as_reference(flow_page, ref_clip_index=1)
+            elif idx == 2:
+                # Clip 3 (Cảnh kết thúc): Gắn Clip 2 làm reference + Gắn thêm icon thương hiệu brainmoney.jpg
+                attach_previous_video_as_reference(flow_page, ref_clip_index=2)
+                attach_brand_icon_ingredient(flow_page, "brainmoney.jpg")
+                if "brainmoney" not in prompt_text.lower():
+                    prompt_text += " Towards the end of the scene, smoothly feature the brand icon brainmoney.jpg (brain with dollar coin) at the center with a glowing animation transition."
 
             add_log(f"-> Đang gửi Prompt Clip {idx + 1}/{len(prompts)} vào Google Flow...", level="info")
             add_log(f"   \"{prompt_text[:85]}...\"", level="info")
 
             target_filename = config.DOWNLOADS_DIR / f"clip_{idx + 1}.mp4"
-            known_urls_before = list(captured_video_urls)
+            known_urls_before = set(captured_video_urls)
+            gen_timestamp = time.time()
 
             # Tìm ô nhập prompt: .ProseMirror
             editor = flow_page.locator(".ProseMirror").first
@@ -247,10 +295,11 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
                 new_video_found = False
                 for wait_step in range(25):
                     time.sleep(2)
-                    # Kiểm tra URL mới bắt được qua response
+                    # Quy tắc 1: Kiểm tra URL mới phát sinh qua Network stream ngay sau mốc gen_timestamp
                     for u in captured_video_urls:
                         if u not in known_urls_before:
-                            add_log(f"-> Đã phát hiện video clip mới từ Google Flow! Đang tải về...", level="info")
+                            elapsed = round(time.time() - gen_timestamp)
+                            add_log(f"-> Đã phát hiện stream video mới ({elapsed}s)! Bắt đầu tải clip {idx + 1}...", level="info")
                             if download_video_via_browser(flow_page, u, target_filename):
                                 size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
                                 add_log(f"-> Đã tải thành công clip {idx + 1}/{len(prompts)} về máy! ({size_mb} MB)", level="success")
@@ -260,15 +309,29 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
                     if new_video_found:
                         break
 
-                    # Nếu sau 15s chưa bắt được URL từ network, hover lên thẻ video đầu tiên trong canvas để kích hoạt stream
-                    if wait_step >= 6 and wait_step % 4 == 0:
+                    # Quy tắc 2: Định danh trực tiếp theo Thẻ tile mới nhất ở đầu Canvas
+                    if wait_step >= 6 and wait_step % 3 == 0:
                         try:
-                            flow_page.evaluate('''() => {
-                                const card = document.querySelector('.virtual-item-container .container');
-                                if (card) card.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                            # Hover lên thẻ đầu tiên trên canvas (thẻ mới nhất đang sinh) để kích hoạt tải video
+                            first_tile_src = flow_page.evaluate('''() => {
+                                const tile = document.querySelector('flow-tile-container, .virtual-item-container');
+                                if (tile) {
+                                    tile.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+                                    const v = tile.querySelector('video');
+                                    return v ? (v.src || v.currentSrc) : null;
+                                }
+                                return null;
                             }''')
+                            if first_tile_src and first_tile_src not in known_urls_before and "blob:" not in first_tile_src:
+                                if download_video_via_browser(flow_page, first_tile_src, target_filename):
+                                    size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
+                                    add_log(f"-> Đã tải thành công clip {idx + 1} từ thẻ đầu Canvas! ({size_mb} MB)", level="success")
+                                    downloaded_files.append(str(target_filename))
+                                    new_video_found = True
+                                    break
                         except Exception:
                             pass
+
 
                 # Fallback nếu chưa tải được qua network stream
                 if not new_video_found:
