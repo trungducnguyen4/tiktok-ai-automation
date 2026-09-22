@@ -1,0 +1,163 @@
+import datetime
+import traceback
+import config
+import db
+from logger import add_log, clear_logs
+from notebooklm_bot import fetch_notebooklm_prompts
+from video_generator import generate_video_clips
+from video_editor import stitch_videos
+from tiktok_publisher import publish_to_tiktok
+import pipeline_state
+
+def execute_daily_pipeline(headless: bool = False) -> dict:
+    start_time = datetime.datetime.now()
+    clear_logs()
+    pipeline_state.reset_pipeline_data()
+    add_log("=== KHỞI ĐỘNG QUY TRÌNH TỰ ĐỘNG TẠO VIDEO & ĐĂNG TIKTOK ===", level="info")
+
+    status_report = {
+        "start_time": str(start_time),
+        "status": "RUNNING",
+        "topic": None,
+        "title": None,
+        "video_path": None,
+        "error": None
+    }
+
+    try:
+        # Bước 1: Mở NotebookLM
+        add_log("[Bước 1/4] Đang mở NotebookLM để lấy chủ đề ngẫu nhiên và kịch bản 3 prompt...", level="info")
+        pipeline_state.update_step_data("step1", {"status": "RUNNING"})
+        script_data = fetch_notebooklm_prompts(headless=headless)
+        
+        topic = script_data.get("topic", "Chủ đề ngẫu nhiên")
+        title = script_data.get("title", "Video ngắn AI")
+        hashtags = script_data.get("hashtags", ["#ai", "#trending"])
+        prompts = script_data.get("prompts", [])
+        voiceovers = script_data.get("voiceovers", [])
+        captions = script_data.get("captions", [])
+
+        status_report["topic"] = topic
+        status_report["title"] = title
+
+        pipeline_state.update_step_data("step1", {
+            "status": "COMPLETED",
+            "topic": topic,
+            "title": title,
+            "hashtags": hashtags,
+            "prompts": prompts,
+            "voiceovers": voiceovers,
+            "captions": captions,
+            "raw_json": script_data
+        })
+
+        add_log(f"-> Chủ đề được chọn: '{topic}'", level="success")
+        add_log(f"-> Tiêu đề TikTok: '{title}'", level="success")
+        add_log(f"-> Hashtags: {' '.join(hashtags)}", level="success")
+        add_log(f"-> Đã trích xuất thành công {len(prompts)} prompts video (10s)!", level="success")
+        add_log(f"-> Đã chuẩn bị {len(voiceovers)} đoạn thuyết minh giọng đọc AI!", level="success")
+        add_log(f"-> Đã chuẩn bị {len(captions)} dòng chữ chạy phụ đề TikTok!", level="success")
+
+        if len(prompts) < 3:
+            add_log(f"Cảnh báo: Chỉ nhận được {len(prompts)} prompt thay vì 3 prompt.", level="warning")
+
+        # Bước 2: Sinh 3 clip video qua Google Flow
+        add_log("[Bước 2/4] Đang chuyển 3 prompt sang Google Flow (Omni 1.1) để render clip...", level="info")
+        pipeline_state.update_step_data("step2", {"status": "RUNNING"})
+        clip_paths = generate_video_clips(prompts[:3], headless=headless)
+        
+        if len(clip_paths) == 0:
+            pipeline_state.update_step_data("step2", {"status": "ERROR"})
+            raise RuntimeError("Không thể tải về bất kỳ clip video nào từ Google Flow.")
+            
+        pipeline_state.update_step_data("step2", {
+            "status": "COMPLETED",
+            "clips": [
+                {
+                    "name": f"Clip {i+1} (10s)",
+                    "file": f"clip_{i+1}.mp4",
+                    "url": f"/downloads/clip_{i+1}.mp4",
+                    "prompt": prompts[i] if i < len(prompts) else ""
+                } for i in range(len(clip_paths))
+            ],
+            "total": len(clip_paths)
+        })
+        add_log(f"-> Đã tạo và tải về thành công {len(clip_paths)}/3 clip video 10s!", level="success")
+
+        # Bước 3: Nối clip + lồng tiếng AI + tạo chữ chạy TikTok
+        add_log("[Bước 3/4] Đang dùng MoviePy nối các clip, lồng tiếng AI và tạo chữ chạy TikTok...", level="info")
+        pipeline_state.update_step_data("step3", {"status": "RUNNING"})
+        final_video_path = stitch_videos(
+            clip_paths=clip_paths,
+            voiceovers=voiceovers,
+            captions=captions,
+            topic=topic
+        )
+        status_report["video_path"] = final_video_path
+        
+        import os
+        sz_mb = round(os.path.getsize(final_video_path) / (1024 * 1024), 2)
+        pipeline_state.update_step_data("step3", {
+            "status": "COMPLETED",
+            "video_url": "/videos/final_tiktok_video.mp4",
+            "duration": "30s",
+            "resolution": "720x1280 (9:16)",
+            "file_size": f"{sz_mb} MB",
+            "has_audio": True,
+            "has_subtitles": True,
+            "voice_name": "Hoài My (Edge-TTS)"
+        })
+        add_log(f"-> Video 30s hoàn chỉnh (kèm thuyết minh AI và chữ chạy) đã được xuất tại: {final_video_path}", level="success")
+
+        # Bước 4: Đăng lên TikTok Studio
+        add_log("[Bước 4/4] Đang mở TikTok Studio để tải video và xuất bản...", level="info")
+        pipeline_state.update_step_data("step4", {
+            "status": "RUNNING",
+            "tiktok_title": title
+        })
+        publish_success = publish_to_tiktok(
+            video_path=final_video_path,
+            title=title,
+            hashtags=hashtags,
+            headless=headless
+        )
+
+        pipeline_state.update_step_data("step4", {
+            "status": "COMPLETED" if publish_success else "ERROR",
+            "tiktok_title": title,
+            "publish_status": "Đã xuất bản thành công lên TikTok Studio" if publish_success else "Chưa hoàn tất xuất bản"
+        })
+
+        if publish_success:
+            status_report["status"] = "SUCCESS"
+            add_log("-> XUẤT BẢN THÀNH CÔNG! Video đã được đăng trực tiếp lên TikTok Studio!", level="success")
+            add_log("=== QUY TRÌNH ĐÃ HOÀN TẤT TRỌN VẸN 100% ===", level="success")
+        else:
+            status_report["status"] = "UPLOAD_FAILED"
+            add_log("-> Không thể hoàn tất nút Publish trên TikTok Studio (vui lòng kiểm tra đăng nhập hoặc duyệt nháp).", level="error")
+
+        # Lưu lịch sử
+        db.save_history_item({
+            "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "date": start_time.strftime("%Y-%m-%d"),
+            "topic": topic,
+            "title": title,
+            "hashtags": hashtags,
+            "prompts": prompts,
+            "video_path": final_video_path,
+            "video_filename": "final_tiktok_video.mp4",
+            "status": status_report["status"]
+        })
+
+        return status_report
+
+    except Exception as e:
+        err_msg = traceback.format_exc()
+        add_log(f"LỖI: {str(e)}", level="error")
+        add_log(f"Chi tiết lỗi kỹ thuật: {err_msg.splitlines()[-1]}", level="error")
+        status_report["status"] = "ERROR"
+        status_report["error"] = str(e)
+        return status_report
+
+if __name__ == "__main__":
+    execute_daily_pipeline(headless=False)

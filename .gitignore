@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# User Profile & Sessions (TUYỆT ĐỐI BẢO MẬT: Chứa Cookie, Token Chrome đăng nhập Google & TikTok)
+browser_profile/
+
+# Media files in output & downloads
+output/*
+!output/.gitkeep
+downloads/*
+!downloads/.gitkeep
+
+# Temporary audio/video test files
+*.mp3
+*.mp4
+*.wav
+*.vtt
+
+# Logs and screenshots
+*.log
+*.png
+
+# Environment variables & local secrets
+.env
+.env.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE configurations
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace

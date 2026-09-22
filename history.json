@@ -1,0 +1,66 @@
+[
+  {
+    "timestamp": "2026-09-22 23:25:38",
+    "date": "2026-09-22",
+    "topic": "Chương trình Save More Tomorrow (SMRT)",
+    "title": "Mẹo tiết kiệm tiền đỉnh cao mà không hề cảm thấy bị xót ví!",
+    "hashtags": [
+      "#SaveMoreTomorrow",
+      "#KinhTeHocHanhVi",
+      "#MeoTaiChinh",
+      "#TietKiemTien",
+      "#QuanLyTaiChinh"
+    ],
+    "prompts": [
+      "Simple 2D flat vector animation of a paycheck icon splitting a small portion into a growing savings jar automatically on a minimal pastel background (10s)",
+      "Simple 2D flat vector animation of a salary bar raising with a future pay bump, automatically boosting the percentage sent to savings (10s)",
+      "Simple 2D flat vector animation of a tiny green seedling inside a piggy bank blossoming into a massive gold coin tree (10s)"
+    ],
+    "video_path": "C:\\Users\\Trung Duc\\Documents\\antigravity\\wise-tesla\\output\\final_tiktok_video.mp4",
+    "video_filename": "final_tiktok_video.mp4",
+    "status": "UPLOAD_FAILED"
+  },
+  {
+    "timestamp": "2026-09-22 22:26:48",
+    "date": "2026-09-22",
+    "topic": "Bẫy Chi Phí Chìm (Sunk Cost Fallacy) Trong Tài Chính Cá Nhân",
+    "title": "Bẫy chi phí chìm: Tại sao bạn càng tiếc tiền thì càng mất thêm?",
+    "hashtags": [
+      "#SunkCostFallacy",
+      "#KinhTeHocHanhVi",
+      "#QuanLyTaiChinh",
+      "#TamLyHoc",
+      "#MeoTaiChinh"
+    ],
+    "prompts": [
+      "Simple 2D flat vector animation of a cute character standing beside a broken car with coins flying out of their wallet, clean minimal colorful 2D illustration style.",
+      "Simple 2D flat animation showing a balance scale with a piggy bank on one side and a red question mark on the other, smooth motion graphics, clean vector art.",
+      "Simple 2D flat vector animation of a character walking away from a sinking boat holding a shiny new gold coin, bright minimal background, clear educational 2D visual."
+    ],
+    "video_path": "C:\\Users\\Trung Duc\\Documents\\antigravity\\wise-tesla\\output\\final_tiktok_video.mp4",
+    "video_filename": "final_tiktok_video.mp4",
+    "status": "UPLOAD_FAILED"
+  },
+  {
+    "timestamp": "2026-09-22 12:00:15",
+    "date": "2026-09-22",
+    "topic": "Khám Phá Vũ Trụ Và Công Nghệ AI",
+    "title": "Tương Lai Nhân Loại Khi AI Tiến Vào Kỷ Nguyên Vũ Trụ!",
+    "hashtags": [
+      "#vutru",
+      "#congnghe",
+      "#ai",
+      "#khampha",
+      "#future",
+      "#trending"
+    ],
+    "prompts": [
+      "A cinematic hyper-realistic shot of a futuristic starship entering hyperdrive near Saturn rings, 8k resolution, cinematic lighting, 10 seconds",
+      "A close-up shot of an advanced AI quantum core pulsing with blue neon energy inside an orbital station, 10 seconds",
+      "Astronaut gazing at a newly discovered glowing exoplanet from the cockpit viewport, epic scale, 10 seconds"
+    ],
+    "video_path": "c:\\Users\\Trung Duc\\Documents\\antigravity\\wise-tesla\\output\\final_tiktok_video.mp4",
+    "video_filename": "final_tiktok_video.mp4",
+    "status": "SUCCESS"
+  }
+]
