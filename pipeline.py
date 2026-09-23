@@ -76,7 +76,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
                 {
                     "name": f"Clip {i+1} (10s)",
                     "file": f"clip_{i+1}.mp4",
-                    "url": f"/downloads/clip_{i+1}.mp4",
+                    "url": f"/downloads/clip_{i+1}.mp4?t={int(datetime.datetime.now().timestamp())}",
                     "prompt": prompts[i] if i < len(prompts) else ""
                 } for i in range(len(clip_paths))
             ],
@@ -99,7 +99,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
         sz_mb = round(os.path.getsize(final_video_path) / (1024 * 1024), 2)
         pipeline_state.update_step_data("step3", {
             "status": "COMPLETED",
-            "video_url": "/videos/final_tiktok_video.mp4",
+            "video_url": f"/videos/final_tiktok_video.mp4?t={int(datetime.datetime.now().timestamp())}",
             "duration": "30s",
             "resolution": "720x1280 (9:16)",
             "file_size": f"{sz_mb} MB",
