@@ -3,15 +3,19 @@ import subprocess
 import tempfile
 from pathlib import Path
 from moviepy import AudioFileClip, CompositeAudioClip
+import config
 from logger import add_log
 
-DEFAULT_VOICE = "vi-VN-HoaiMyNeural" # Giọng nữ miền Bắc/chuẩn truyền cảm, mượt mà phong cách TikTok
-MALE_VOICE = "vi-VN-NamMinhNeural"   # Giọng nam trầm ấm
+DEFAULT_VOICE = getattr(config, "DEFAULT_VOICE", "vi-VN-NamMinhNeural")
+MALE_VOICE = "vi-VN-NamMinhNeural"
+FEMALE_VOICE = "vi-VN-HoaiMyNeural"
 
-def generate_tts_audio_clip(text: str, output_file: str, voice: str = DEFAULT_VOICE) -> bool:
+def generate_tts_audio_clip(text: str, output_file: str, voice: str = None) -> bool:
     """
     Sinh file âm thanh từ văn bản tiếng Việt bằng Edge-TTS (fallback gTTS).
     """
+    if voice is None:
+        voice = getattr(config, "DEFAULT_VOICE", DEFAULT_VOICE)
     clean_text = text.strip()
     if not clean_text:
         return False
@@ -50,7 +54,7 @@ def create_synchronized_audio_track(
     voiceovers: list[str],
     segment_durations: list[float] = [10.0, 10.0, 10.0],
     output_audio_path: str = "full_voiceover.mp3",
-    voice: str = DEFAULT_VOICE
+    voice: str = None
 ) -> str | None:
     """
     Tạo 1 track âm thanh 30s với 3 đoạn thuyết minh khớp chính xác vào từng clip 10s:
@@ -58,7 +62,9 @@ def create_synchronized_audio_track(
     - Lời bình 2 bắt đầu ở giây 10.5 (Clip 2)
     - Lời bình 3 bắt đầu ở giây 20.5 (Clip 3)
     """
-    add_log(f"-> Đang tổng hợp giọng đọc AI cho {len(voiceovers)} phân cảnh...", level="info")
+    if voice is None:
+        voice = getattr(config, "DEFAULT_VOICE", DEFAULT_VOICE)
+    add_log(f"-> Đang tổng hợp giọng đọc AI ({voice}) cho {len(voiceovers)} phân cảnh...", level="info")
     out_path = Path(output_audio_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 

@@ -390,6 +390,8 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
                 attach_brand_icon_ingredient(flow_page, "brainmoney.jpg")
                 if "brainmoney" not in prompt_text.lower():
                     prompt_text += " Towards the end of the scene, smoothly feature the brand icon brainmoney.jpg (brain with dollar coin) at the center with a glowing animation transition."
+                if "same narrator" not in prompt_text.lower():
+                    prompt_text += " Spoken voiceover by the SAME narrator as previous scenes."
 
             add_log(f"-> Đang gửi Prompt Clip {idx + 1}/{len(prompts)} vào Google Flow...", level="info")
             add_log(f"   \"{prompt_text[:85]}...\"", level="info")

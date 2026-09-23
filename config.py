@@ -28,3 +28,8 @@ GOOGLE_FLOW_URL = "https://flow.google.com/project/a85fdaa4-0c21-4fcb-b2ca-0a9c0
 # Cấu hình giờ chạy (12:00 trưa hàng ngày)
 SCHEDULE_HOUR = 12
 SCHEDULE_MINUTE = 0
+
+# Cấu hình giọng đọc AI đồng bộ (Edge-TTS chuẩn TikTok tiếng Việt)
+# "vi-VN-NamMinhNeural": Giọng nam miền Bắc, trầm ấm, truyền cảm, phong cách chuyên gia tài chính/tâm lý
+# "vi-VN-HoaiMyNeural": Giọng nữ miền Bắc, mượt mà, cuốn hút chuẩn TikTok
+DEFAULT_VOICE = "vi-VN-NamMinhNeural"

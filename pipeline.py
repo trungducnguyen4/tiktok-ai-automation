@@ -5,7 +5,7 @@ import db
 from logger import add_log, clear_logs
 from notebooklm_bot import fetch_notebooklm_prompts
 from video_generator import generate_video_clips
-from video_editor import stitch_videos
+from video_editor import stitch_videos, synchronize_single_clip
 from tiktok_publisher import publish_to_tiktok
 import pipeline_state
 
@@ -69,7 +69,23 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
         if len(clip_paths) == 0:
             pipeline_state.update_step_data("step2", {"status": "ERROR"})
             raise RuntimeError("Không thể tải về bất kỳ clip video nào từ Google Flow.")
-            
+
+        # Đồng bộ hóa 100% cùng 1 giọng đọc AI và phụ đề chuẩn tiếng Việt (không lỗi font) cho từng clip lẻ:
+        add_log("-> Đang đồng bộ hóa 1 giọng đọc duy nhất và phụ đề TikTok chuẩn tiếng Việt cho 3 video lẻ...", level="info")
+        for i, cp in enumerate(clip_paths):
+            vo_text = voiceovers[i] if i < len(voiceovers) else ""
+            cap_text = captions[i] if i < len(captions) else ""
+            try:
+                synchronize_single_clip(
+                    clip_path=cp,
+                    voiceover_text=vo_text,
+                    caption_text=cap_text,
+                    output_path=cp
+                )
+                add_log(f"   [Đồng bộ Clip {i+1}] Đã gắn giọng đọc duy nhất & phụ đề TikTok sắc nét!", level="success")
+            except Exception as e:
+                add_log(f"Lưu ý khi đồng bộ clip {i+1}: {e}", level="warning")
+
         pipeline_state.update_step_data("step2", {
             "status": "COMPLETED",
             "clips": [
@@ -82,10 +98,10 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
             ],
             "total": len(clip_paths)
         })
-        add_log(f"-> Đã tạo và tải về thành công {len(clip_paths)}/3 clip video 10s!", level="success")
+        add_log(f"-> Đã tạo và đồng bộ thành công {len(clip_paths)}/3 clip video 10s!", level="success")
 
-        # Bước 3: Nối clip + lồng tiếng AI + tạo chữ chạy TikTok
-        add_log("[Bước 3/4] Đang dùng MoviePy nối các clip, lồng tiếng AI và tạo chữ chạy TikTok...", level="info")
+        # Bước 3: Nối clip + lồng tiếng AI đồng bộ + tạo chữ chạy TikTok
+        add_log("[Bước 3/4] Đang dùng MoviePy nối các clip, lồng tiếng AI đồng bộ và tạo chữ chạy TikTok...", level="info")
         pipeline_state.update_step_data("step3", {"status": "RUNNING"})
         final_video_path = stitch_videos(
             clip_paths=clip_paths,
@@ -97,6 +113,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
         
         import os
         sz_mb = round(os.path.getsize(final_video_path) / (1024 * 1024), 2)
+        voice_id = getattr(config, "DEFAULT_VOICE", "vi-VN-NamMinhNeural")
         pipeline_state.update_step_data("step3", {
             "status": "COMPLETED",
             "video_url": f"/videos/final_tiktok_video.mp4?t={int(datetime.datetime.now().timestamp())}",
@@ -105,7 +122,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
             "file_size": f"{sz_mb} MB",
             "has_audio": True,
             "has_subtitles": True,
-            "voice_name": "Google Flow Native (Tích hợp Prompt)"
+            "voice_name": f"Edge-TTS ({voice_id}) - Đồng bộ 100%"
         })
         add_log(f"-> Video 30s hoàn chỉnh (kèm thuyết minh AI và chữ chạy) đã được xuất tại: {final_video_path}", level="success")
 
