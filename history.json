@@ -1,5 +1,26 @@
 [
   {
+    "timestamp": "2026-09-24 09:32:22",
+    "date": "2026-09-24",
+    "topic": "Tâm lý sợ mất mát (Loss Aversion)",
+    "title": "Vì sao nỗi đau mất 1 triệu đồng lại lớn gấp đôi niềm vui kiếm được 1 triệu?",
+    "hashtags": [
+      "#LossAversion",
+      "#TamLyHocTaiChinh",
+      "#LyThuyetTriVong",
+      "#KinhTeHocHanhVi",
+      "#DauTuChongLo"
+    ],
+    "prompts": [
+      "Simple 2D flat vector animation of a glowing green coin dropping into a character's hand with a small smile, followed by a red coin falling out of a pocket causing a massive distressed emoji expression on a minimal pastel background. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Bạn có biết cảm giác đau đớn khi mất một triệu đồng thường mạnh gấp hai lần niềm vui khi kiếm được chính số tiền đó?\". Clean text-free visual background. (10s)",
+      "Simple 2D flat vector animation of a character clinging tightly to a falling red stock chart icon, refusing to sell while holding a green profit icon loosely. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Tâm lý sợ mất mát khiến nhiều nhà đầu tư gồng lỗ liên tục, quyết không chấp nhận cắt lỗ để rồi rủi ro càng thêm nặng nề.\". Clean text-free visual background. (10s)",
+      "Simple 2D flat vector animation of a balance scale smoothly equalizing as automated stop-loss target icons replace emotional decision-making. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Để vượt qua bẫy tâm lý này, hãy thiết lập quy tắc cắt lỗ tự động và tuân thủ kỷ luật tài chính dài hạn.\". Clean text-free visual background. (10s)"
+    ],
+    "video_path": "C:\\Users\\Trung Duc\\Documents\\antigravity\\wise-tesla\\output\\final_tiktok_video.mp4",
+    "video_filename": "final_tiktok_video.mp4",
+    "status": "UPLOAD_FAILED"
+  },
+  {
     "timestamp": "2026-09-23 14:44:11",
     "date": "2026-09-23",
     "topic": "Tâm lý học Khan hiếm (Scarcity Mindset)",
