@@ -93,7 +93,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     break
                 try:
                     self.wfile.write(chunk)
-                except (ConnectionResetError, BrokenPipeError):
+                except (ConnectionResetError, BrokenPipeError, ConnectionAbortedError):
                     break
                 bytes_to_send -= len(chunk)
 
