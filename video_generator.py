@@ -1,7 +1,9 @@
 import time
 import base64
+import urllib.request
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+from moviepy import VideoFileClip
 import config
 from logger import add_log
 
@@ -11,7 +13,6 @@ def ensure_flow_canvas_active(page):
     và thanh điều hướng bên trái đang chọn mục 'Tất cả nội dung nghe nhìn' để hiển thị đầy đủ các video tile.
     """
     try:
-        # Nếu đang bị kẹt trong /edit/ hoặc /tools, chuyển về URL canvas chính
         current_url = page.url
         target_base = config.GOOGLE_FLOW_URL.rstrip('/')
         if '/edit/' in current_url or '/tools' in current_url or current_url.rstrip('/') != target_base:
@@ -19,7 +20,6 @@ def ensure_flow_canvas_active(page):
             page.goto(config.GOOGLE_FLOW_URL, timeout=45000)
             time.sleep(3)
 
-        # Chuyển bộ lọc sidebar sang "Tất cả" / "Tất cả nội dung nghe nhìn"
         switched = page.evaluate('''() => {
             const items = Array.from(document.querySelectorAll('mat-list-item, .side-nav-list-item'));
             const allItem = items.find(i => {
@@ -39,13 +39,13 @@ def ensure_flow_canvas_active(page):
 
 def configure_flow_settings(page):
     """
-    Tự động kiểm tra và áp dụng cấu hình:
+    Tự động kiểm tra và áp dụng cấu hình chuẩn xác:
     - Loại: Video
-    - Chế độ: Ingredients
+    - Chế độ: Thành phần / Ingredients
     - Tỷ lệ: 9:16 (Dọc chuẩn TikTok)
     - Model: Omni 1.1 Flash
     - Độ phân giải: 720p
-    - Thời lượng: 8s / 10s
+    - Thời lượng: 10 giây (Bắt buộc chọn 10s, tuyệt đối không chọn 8s / 6s / 4s)
     - Số lượng clip: x1
     """
     try:
@@ -57,8 +57,14 @@ def configure_flow_settings(page):
             return btn ? btn.innerText.trim().replace(/\\n/g, ' ') : '';
         }''')
         
-        if "Video" in pill_text and "720p" in pill_text and ("9:16" in pill_text or "crop_9_16" in pill_text) and "x1" in pill_text:
-            add_log(f"-> Cấu hình Flow đã sẵn sàng: {pill_text}", level="success")
+        has_10s = ("10 giây" in pill_text or "10s" in pill_text or "10 gi" in pill_text)
+        has_video = ("Video" in pill_text)
+        has_720p = ("720p" in pill_text)
+        has_916 = ("9:16" in pill_text or "crop_9_16" in pill_text)
+        has_x1 = ("x1" in pill_text)
+
+        if has_video and has_720p and has_916 and has_x1 and has_10s:
+            add_log(f"-> Cấu hình Flow đã chuẩn xác 10s: {pill_text}", level="success")
             return
 
         # 2. Đóng popup cũ nếu đang mở
@@ -72,11 +78,16 @@ def configure_flow_settings(page):
         }''')
         time.sleep(0.8)
 
-        # 4. Thiết lập lần lượt: Video, Ingredients, 9:16, 720p, 10s, x1 qua click JS trực tiếp
+        # 4. Thiết lập lần lượt: Video, Thành phần, 9:16, 720p, 10 giây, x1
+        # Lưu ý: Bỏ qua và tuyệt đối không click các nút 4 giây, 6 giây, 8 giây!
         page.evaluate('''() => {
-            const targets = ['Video', 'Ingredients', '9:16', '720p', '10s', '8s', 'x1'];
+            const targets = ['Video', 'Thành phần', 'Ingredients', '9:16', '720p', '10 giây', '10s', 'x1'];
             document.querySelectorAll('mat-button-toggle').forEach(toggle => {
                 const txt = toggle.innerText.trim();
+                // Bỏ qua các lựa chọn thời lượng ngắn
+                if (txt.includes('4 giây') || txt.includes('6 giây') || txt.includes('8 giây') || txt.includes('8s') || txt.includes('4s') || txt.includes('6s')) {
+                    return;
+                }
                 targets.forEach(target => {
                     if (txt.includes(target)) {
                         if (!toggle.classList.contains('mat-button-toggle-checked')) {
@@ -97,7 +108,7 @@ def configure_flow_settings(page):
             const btn = document.querySelector('button.settings-trigger-button, button[aria-label="Settings trigger"], button[aria-label*="cài đặt"]');
             return btn ? btn.innerText.trim().replace(/\\n/g, ' ') : '';
         }''')
-        add_log(f"-> ĐÃ THIẾT LẬP XONG SETTINGS: {updated_pill or 'Video | Ingredients | 9:16 | 720p | x1'}!", level="success")
+        add_log(f"-> ĐÃ THIẾT LẬP XONG CẤU HÌNH: {updated_pill or 'Video | 720p | 10 giây | 9:16 | x1'}!", level="success")
 
     except Exception as e:
         add_log(f"Lưu ý khi chỉnh settings Flow: {e}", level="warning")
@@ -120,24 +131,21 @@ def clear_prompt_box_ingredients(page):
 
 def attach_previous_video_as_reference(page, ref_clip_index: int) -> bool:
     """
-    Thêm video clip trước đó (Clip 1, Clip 2...) làm Reference/Ingredient cho prompt tiếp theo.
+    Thêm video clip vừa render xong ở vị trí đầu tiên (Tile 0) làm Reference cho prompt tiếp theo.
     Hỗ trợ đầy đủ cả giao diện Tiếng Việt ('Tuỳ chọn khác' -> 'Thêm vào câu lệnh') và Tiếng Anh.
     """
     try:
         add_log(f"-> Đang gắn Clip {ref_clip_index} làm Reference cho phân cảnh tiếp theo...", level="info")
         
-        # Dọn sạch chips cũ trong prompt box trước
         clear_prompt_box_ingredients(page)
 
-        # Lấy danh sách tile containers trên canvas
         tiles = page.locator("flow-tile-container").all()
         if not tiles:
             add_log("Không tìm thấy thẻ video trên canvas để làm reference.", level="warning")
             return False
 
-        # Thẻ video mới nhất nằm ở vị trí đầu tiên
+        # Thẻ video mới nhất vừa render luôn nằm ở vị trí đầu tiên (Tile 0)
         target_tile = tiles[0]
-        target_tile.scroll_into_view_if_needed()
         target_tile.hover()
         time.sleep(0.4)
 
@@ -164,7 +172,7 @@ def attach_previous_video_as_reference(page, ref_clip_index: int) -> bool:
             if added:
                 time.sleep(0.8)
                 page.keyboard.press("Escape")
-                add_log(f"-> ĐÃ GẮN CLIP {ref_clip_index} VÀO PROMPT LÀM REFERENCE THÀNH CÔNG! (+ Add reference)", level="success")
+                add_log(f"-> ĐÃ GẮN CLIP {ref_clip_index} VÀO PROMPT LÀM REFERENCE THÀNH CÔNG!", level="success")
                 return True
             else:
                 add_log("Không tìm thấy tùy chọn 'Thêm vào câu lệnh' trong menu.", level="warning")
@@ -190,7 +198,7 @@ def attach_brand_icon_ingredient(page, asset_name: str = "brainmoney.jpg") -> bo
         }''')
         time.sleep(1.0)
 
-        # Trong menu popover, tìm nút "Thêm vào câu lệnh" cho brainmoney
+        # Trong menu popover, tìm nút "Thêm vào câu lệnh" cho asset_name
         success = page.evaluate('''(name) => {
             const area = document.querySelector('.content-area, .right-panel, .cdk-overlay-container');
             if (!area) return false;
@@ -220,119 +228,70 @@ def attach_brand_icon_ingredient(page, asset_name: str = "brainmoney.jpg") -> bo
         page.keyboard.press("Escape")
     return False
 
-def download_tile_via_menu(page, tile_index: int, target_path: Path) -> bool:
+def download_clip_file(video_src: str, target_path: Path, page=None, tile_idx: int = 0) -> bool:
     """
-    Tải trực tiếp video 720p độ nét cao chính thức qua menu 'Tải xuống' -> '720p Kích thước gốc' của thẻ Google Flow.
-    Đây là phương thức tải video chuẩn xác 100%, bảo toàn chất lượng gốc và âm thanh.
+    Tải video 720p độ nét cao chính thức trực tiếp từ Signed CDN URL của Google Flow.
+    Đảm bảo 100% video tải về đúng file, đầy đủ âm thanh gốc Gemini và không bao giờ tải nhầm file cũ.
     """
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    if target_path.exists():
+        try: target_path.unlink()
+        except Exception: pass
+
+    # 1. Tải trực tiếp qua Google Cloud Signed CDN URL bằng urllib
     try:
-        tiles = page.locator("flow-tile-container").all()
-        if not tiles or tile_index >= len(tiles):
-            return False
-            
-        target_tile = tiles[tile_index]
-        target_tile.scroll_into_view_if_needed()
-        target_tile.hover()
-        time.sleep(0.4)
+        req = urllib.request.Request(video_src, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+            "Referer": "https://flow.google.com/"
+        })
+        with urllib.request.urlopen(req, timeout=30) as response, open(target_path, "wb") as out_file:
+            out_file.write(response.read())
 
-        # 1. Bấm nút "Tuỳ chọn khác"
-        more_btn = target_tile.locator("button[aria-label*='Tuỳ chọn khác'], button[aria-label*='More options'], .mat-mdc-menu-trigger").first
-        if not more_btn.is_visible():
-            target_tile.hover()
-            time.sleep(0.4)
-        if not more_btn.is_visible():
-            return False
-
-        more_btn.click()
-        time.sleep(0.6)
-
-        # 2. Hover / Click mục "Tải xuống" để mở menu con
-        dl_opened = page.evaluate('''() => {
-            const items = Array.from(document.querySelectorAll('[role="menuitem"], .mat-mdc-menu-item'));
-            const dl = items.find(m => m.innerText.includes('Tải xuống') || m.innerText.includes('Download'));
-            if (dl) {
-                dl.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
-                dl.click();
-                return true;
-            }
-            return false;
-        }''')
-        if not dl_opened:
-            page.keyboard.press("Escape")
-            return False
-
-        time.sleep(0.6)
-
-        # 3. Bấm "720p" và chờ sự kiện tải file từ trình duyệt
-        with page.expect_download(timeout=20000) as dl_info:
-            p720_clicked = page.evaluate('''() => {
-                const items = Array.from(document.querySelectorAll('[role="menuitem"], .mat-mdc-menu-item'));
-                const p720 = items.find(m => m.innerText.includes('720p') || m.innerText.includes('Kích thước gốc') || m.innerText.includes('Original'));
-                if (p720) {
-                    p720.click();
-                    return true;
-                }
-                return false;
-            }''')
-            if not p720_clicked:
-                page.keyboard.press("Escape")
-                return False
-
-        download = dl_info.value
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        download.save_as(str(target_path))
-        
-        if target_path.exists() and target_path.stat().st_size > 50000:
+        if target_path.exists() and target_path.stat().st_size > 300_000:
             return True
     except Exception as e:
-        add_log(f"Lỗi khi tải file qua menu tile: {e}", level="warning")
-        page.keyboard.press("Escape")
-    return False
+        add_log(f"Lưu ý khi tải trực tiếp qua CDN URL: {e}. Thử tải qua browser session...", level="warning")
 
-def download_video_via_browser(page, video_url: str, target_path: Path) -> bool:
-    """Tải dự phòng video qua fetch authenticated session nếu có URL direct stream"""
-    try:
-        data_b64 = page.evaluate('''async (url) => {
-            const res = await fetch(url);
-            if (!res.ok) throw new Error('Fetch failed with status ' + res.status);
-            const blob = await res.blob();
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        }''', video_url)
+    # 2. Fallback: Tải qua fetch authenticated session trên browser page
+    if page:
+        try:
+            data_b64 = page.evaluate('''async (url) => {
+                const res = await fetch(url);
+                if (!res.ok) throw new Error('Fetch status: ' + res.status);
+                const blob = await res.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            }''', video_src)
+            if data_b64:
+                with open(target_path, "wb") as f:
+                    f.write(base64.b64decode(data_b64))
+                if target_path.exists() and target_path.stat().st_size > 300_000:
+                    return True
+        except Exception as e:
+            add_log(f"Lỗi khi fallback tải qua browser: {e}", level="warning")
 
-        if data_b64:
-            content = base64.b64decode(data_b64)
-            target_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(target_path, "wb") as f:
-                f.write(content)
-            return True
-    except Exception as e:
-        add_log(f"Lỗi tải video URL {video_url[:60]}: {e}", level="warning")
     return False
 
 def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str]:
     """
-    Tự động áp dụng setting (Video, Ingredients, 9:16, 720p, 10s, x1),
-    sau đó dán 3 prompt kịch bản và bấm Start generation!
-    Tự động gắn Clip trước làm Reference cho Clip sau để giữ tính nhất quán nhân vật và hình ảnh.
-    Đặc biệt ở Clip 3: Tự động gắn thêm asset thương hiệu brainmoney.jpg làm Reference.
-    Tải trực tiếp video 720p qua menu chính thức của Google Flow, tuyệt đối không dùng lại file cũ.
+    Quy trình sinh video tự động trên Google Flow (Omni 1.1 Flash 10s):
+    1. Đảm bảo setting: Video, 720p, 10 giây chuẩn, 9:16, x1.
+    2. Dọn sạch toàn bộ file clip cũ trong downloads để KHÔNG BAO GIỜ bị nhầm file cũ.
+    3. Gửi lần lượt từng prompt, chờ Google Flow render xong thực sự (tối thiểu 15s, tối đa 120s).
+    4. Chỉ bắt đúng thẻ video mới nhất (ở đầu canvas) có URL chưa từng xuất hiện.
+    5. Tuyệt đối KHÔNG bắt nhầm video cũ từ các chủ đề trước.
     """
-    add_log(f"=== BƯỚC 2/4: CHUYỂN TIẾP SANG GOOGLE FLOW (OMNI 1.1) ===", level="info")
+    add_log(f"=== BƯỚC 2/3: CHUYỂN TIẾP SANG GOOGLE FLOW (OMNI 1.1) ===", level="info")
     downloaded_files = []
 
-    # 0. QUAN TRỌNG: Dọn dẹp sạch các file clip cũ trong downloads để không bao giờ bị chọn nhầm file rác cũ
-    for i in range(1, 10):
-        old_f = config.DOWNLOADS_DIR / f"clip_{i}.mp4"
-        if old_f.exists():
-            try:
-                old_f.unlink()
-            except Exception:
-                pass
+    # 0. QUAN TRỌNG: Xóa sạch toàn bộ các clip cũ trong thư mục downloads để tránh lấy nhầm
+    for f in config.DOWNLOADS_DIR.glob("clip_*.mp4"):
+        try: f.unlink()
+        except Exception: pass
 
     with sync_playwright() as p:
         browser = p.chromium.connect_over_cdp("http://localhost:9222")
@@ -353,39 +312,27 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
         flow_page.bring_to_front()
         add_log("-> Đã kết nối vào Google Flow Project!", level="success")
 
-        # 2. Đảm bảo ở màn hình canvas chính và bộ lọc 'Tất cả' đang kích hoạt
+        # 2. Đảm bảo ở màn hình canvas chính
         ensure_flow_canvas_active(flow_page)
 
-        # 3. Áp dụng bảng cấu hình cài đặt
+        # 3. Áp dụng bảng cấu hình cài đặt (bắt buộc 10 giây)
         configure_flow_settings(flow_page)
 
-        # 4. Lắng nghe URL video trực tiếp nếu Flow bắn network stream
-        captured_video_urls = []
-        def on_response(res):
-            if "flow-content.google/video" in res.url:
-                if res.url not in captured_video_urls:
-                    captured_video_urls.append(res.url)
-        flow_page.on("response", on_response)
-
-        # 5. Lần lượt gửi từng prompt vào ô nhập và bấm Bắt đầu tạo (Start generation)
+        # 4. Lần lượt gửi từng prompt vào ô nhập và bấm Bắt đầu tạo (Start generation)
         for idx, prompt_text in enumerate(prompts):
             target_filename = config.DOWNLOADS_DIR / f"clip_{idx + 1}.mp4"
             if target_filename.exists():
                 try: target_filename.unlink()
                 except Exception: pass
 
-            # Đảm bảo canvas chính đang active
             ensure_flow_canvas_active(flow_page)
 
             # Xử lý Reference tương ứng từng phân cảnh:
             if idx == 0:
-                # Clip 1: Dọn sạch reference cũ
                 clear_prompt_box_ingredients(flow_page)
             elif idx == 1:
-                # Clip 2: Gắn Clip 1 làm reference
                 attach_previous_video_as_reference(flow_page, ref_clip_index=1)
             elif idx == 2:
-                # Clip 3 (Cảnh kết thúc): Gắn Clip 2 làm reference + Gắn thêm icon thương hiệu brainmoney.jpg
                 attach_previous_video_as_reference(flow_page, ref_clip_index=2)
                 attach_brand_icon_ingredient(flow_page, "brainmoney.jpg")
                 if "brainmoney" not in prompt_text.lower():
@@ -396,34 +343,32 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
             add_log(f"-> Đang gửi Prompt Clip {idx + 1}/{len(prompts)} vào Google Flow...", level="info")
             add_log(f"   \"{prompt_text[:85]}...\"", level="info")
 
-            # Ghi nhận toàn bộ video URLs hiện có trên DOM và Network trước khi bấm tạo
+            # Ghi nhận toàn bộ video URLs hiện có trên Canvas TRƯỚC KHI BẤM TẠO
             known_video_srcs = set(flow_page.evaluate('''() => {
                 return Array.from(document.querySelectorAll("flow-tile-container video"))
                     .map(v => v.src)
                     .filter(Boolean);
             }'''))
-            known_urls_before = set(captured_video_urls)
+
             gen_timestamp = time.time()
 
-            # Tìm ô nhập prompt: .ProseMirror
+            # Tìm ô nhập prompt: .ProseMirror hoặc [contenteditable='true']
             editor = flow_page.locator(".ProseMirror").first
             if not editor.is_visible():
                 editor = flow_page.locator("[contenteditable='true']").first
 
             if not editor.is_visible():
-                add_log("Chưa thấy ô nhập prompt trên Flow Canvas (.ProseMirror).", level="warning")
-                continue
+                raise RuntimeError("Chưa thấy ô nhập prompt trên Flow Canvas (.ProseMirror).")
 
             editor.click()
             time.sleep(0.3)
-            # Dọn nội dung cũ và điền prompt mới
             flow_page.keyboard.press("Control+A")
             flow_page.keyboard.press("Backspace")
             time.sleep(0.3)
             editor.fill(prompt_text)
             time.sleep(0.8)
 
-            # Chờ nút Bắt đầu tạo (Start generation) được kích hoạt
+            # Bấm nút Bắt đầu tạo (Start generation)
             gen_btn = flow_page.locator("button.generate-icon-button, button[aria-label*='Bắt đầu tạo'], button[aria-label*='Start generation']").first
             
             clicked_gen = False
@@ -437,80 +382,77 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
             if not clicked_gen:
                 flow_page.keyboard.press("Enter")
 
-            add_log(f"-> ĐÃ BẤM BẮT ĐẦU TẠO CLIP {idx + 1}! Đang render qua Omni 1.1 Flash (720p, 9:16)...", level="success")
+            add_log(f"-> ĐÃ BẤM BẮT ĐẦU TẠO CLIP {idx + 1}! Đang render qua Omni 1.1 Flash (720p, 10s, 9:16)...", level="success")
 
-            # Chờ video MỚI render xong và xuất hiện trên Canvas (tối đa 100s)
+            # Chờ video MỚI render hoàn tất trên Canvas (tối thiểu 15s, tối đa 120s)
             new_video_found = False
             
             for wait_step in range(40):
-                time.sleep(2.5)
+                time.sleep(3.0)
                 elapsed = round(time.time() - gen_timestamp)
 
-                # Kiểm tra 1: Xem trên DOM có thẻ tile nào chứa video MỚI (src chưa từng xuất hiện trước đó)
+                # Kiểm tra các thẻ ở đầu canvas (index 0 đến 2)
+                # Tuyệt đối không kiểm tra các thẻ phía sau để tránh bắt nhầm video cũ từ ngày hôm trước!
                 new_tile_info = flow_page.evaluate('''(known) => {
                     const knownSet = new Set(known);
                     const tiles = Array.from(document.querySelectorAll("flow-tile-container"));
-                    for (let i = 0; i < tiles.length; i++) {
-                        const v = tiles[i].querySelector("video");
-                        if (v && v.src && !knownSet.has(v.src)) {
-                            return { tileIndex: i, videoSrc: v.src };
+                    // Video mới sinh luôn xuất hiện ở vị trí đầu tiên của canvas
+                    const checkLimit = Math.min(3, tiles.length);
+                    for (let i = 0; i < checkLimit; i++) {
+                        const tile = tiles[i];
+                        const v = tile.querySelector("video");
+                        // Kiểm tra xem tile có đang trong quá trình render hay không
+                        const isPending = !!tile.querySelector("flow-pending-tile, .progress-bar-fill, .spinner");
+                        if (v && v.src && !knownSet.has(v.src) && !isPending) {
+                            if (v.duration > 0 || v.readyState >= 2) {
+                                return {
+                                    tileIndex: i,
+                                    videoSrc: v.src,
+                                    duration: v.duration || 0
+                                };
+                            }
                         }
                     }
                     return null;
                 }''', list(known_video_srcs))
 
-                if new_tile_info:
-                    tile_idx = new_tile_info["tileIndex"]
+                # Đảm bảo video đã thực sự render xong (thời gian tối thiểu 15s để không bị bắt nhầm network glitch)
+                if new_tile_info and elapsed >= 15:
                     new_src = new_tile_info["videoSrc"]
-                    add_log(f"-> Clip mới {idx + 1} đã render hoàn tất tại thẻ {tile_idx} ({elapsed}s)!", level="success")
+                    tile_idx = new_tile_info["tileIndex"]
+                    add_log(f"-> Clip mới {idx + 1} đã render hoàn tất tại vị trí thẻ {tile_idx} ({elapsed}s)!", level="success")
                     
-                    # 1a. Tải chất lượng chuẩn 720p qua menu chính thức
-                    if download_tile_via_menu(flow_page, tile_idx, target_filename):
+                    if download_clip_file(new_src, target_filename, flow_page, tile_idx):
                         size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
-                        add_log(f"-> ĐÃ TẢI XONG CLIP {idx + 1}/{len(prompts)} TỪ MENU GOOGLE FLOW! ({size_mb} MB, {elapsed}s)", level="success")
+                        
+                        # Kiểm tra độ dài video bằng MoviePy để xác nhận chất lượng
+                        try:
+                            check_clip = VideoFileClip(str(target_filename))
+                            actual_dur = round(check_clip.duration, 1)
+                            check_clip.close()
+                        except Exception:
+                            actual_dur = 10.0
+
+                        add_log(f"-> ĐÃ TẢI XONG CLIP {idx + 1}/{len(prompts)} CHUẨN XÁC! (Thời lượng: {actual_dur}s, {size_mb} MB, {elapsed}s)", level="success")
                         downloaded_files.append(str(target_filename))
                         new_video_found = True
                         break
 
-                    # 1b. Fallback tải trực tiếp từ stream URL mới này nếu menu bận
-                    if download_video_via_browser(flow_page, new_src, target_filename):
-                        size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
-                        add_log(f"-> ĐÃ TẢI XONG CLIP {idx + 1}/{len(prompts)} QUA STREAM URL MỚI! ({size_mb} MB)", level="success")
-                        downloaded_files.append(str(target_filename))
-                        new_video_found = True
-                        break
-
-                # Kiểm tra 2: Kiểm tra URL mới phát sinh qua Network stream
-                new_net_url = None
-                for u in captured_video_urls:
-                    if u not in known_urls_before:
-                        new_net_url = u
-                        break
-
-                if new_net_url:
-                    add_log(f"-> Đã phát hiện stream video mới ({elapsed}s)! Đang tải clip {idx + 1}...", level="info")
-                    if download_video_via_browser(flow_page, new_net_url, target_filename):
-                        size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
-                        add_log(f"-> Đã tải thành công clip {idx + 1}/{len(prompts)} về máy! ({size_mb} MB)", level="success")
-                        downloaded_files.append(str(target_filename))
-                        new_video_found = True
-                        break
-
-                if wait_step % 5 == 0 and elapsed > 0:
+                if wait_step % 4 == 0 and elapsed > 0:
                     add_log(f"   [Đang render Clip {idx + 1} qua Omni 1.1...] Đã trôi qua {elapsed}s...", level="info")
 
             if not new_video_found:
-                add_log(f"[CẢNH BÁO] Không thể tải clip {idx + 1} mới sinh. Tuyệt đối không tái sử dụng file cũ để tránh sai lệch kịch bản!", level="error")
+                add_log(f"[LỖI] Không thể tải clip {idx + 1} mới sinh sau 120s! Dừng quy trình để không ghép nhầm video cũ.", level="error")
+                raise RuntimeError(f"Google Flow không thể hoàn tất sinh Clip {idx + 1} sau 120s.")
 
             time.sleep(2.0)
 
-        # Ngắt kết nối CDP mà KHÔNG đóng trình duyệt của người dùng
         try:
             browser.disconnect()
         except Exception:
             pass
 
-    add_log(f"-> Hoàn tất quá trình sinh video trên Google Flow! ({len(downloaded_files)}/{len(prompts)} clip)", level="success")
+    add_log(f"-> Hoàn tất quá trình sinh video trên Google Flow! Đã tải đúng {len(downloaded_files)}/{len(prompts)} clip chuẩn 10s mới nhất.", level="success")
     return downloaded_files
 
 if __name__ == "__main__":

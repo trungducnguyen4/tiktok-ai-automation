@@ -1,5 +1,27 @@
 [
   {
+    "timestamp": "2026-09-24 10:30:28",
+    "date": "2026-09-24",
+    "topic": "Hiệu ứng Mỏ neo (Anchoring Effect)",
+    "title": "Cú lừa 'Mỏ neo' khiến bạn vung tay quá trán khi mua sắm và đầu tư!",
+    "hashtags": [
+      "#AnchoringEffect",
+      "#HieuUngMoNeo",
+      "#TamLyHocTaiChinh",
+      "#KinhTeHocHanhVi",
+      "#MeoChiTieu"
+    ],
+    "prompts": [
+      "Simple 2D flat vector animation of a giant price tag of $100 being crossed out to highlight a $50 price tag next to it on a minimal pastel background. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Bạn có biết con số đầu tiên bạn nhìn thấy sẽ vô tình trở thành mỏ neo tâm lý, chi phối toàn bộ quyết định mua sắm của bạn?\". Clean text-free visual background. (10s)",
+      "Simple 2D flat vector animation of a ship anchor lowering down to pin a stock price chart at its peak while the trendline plummets down. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Trong đầu tư, nhiều người bị mắc kẹt bởi mỏ neo giá đỉnh cũ, cố giữ cổ phiếu lỗ chỉ vì nghĩ nó phải đắt như trước.\". Clean text-free visual background. (10s)",
+      "Simple 2D flat vector animation of a character smoothly hoisting up the anchor and analyzing objective valuation charts with real-time data. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Hãy chủ động tháo bỏ mỏ neo tâm lý bằng cách định giá tài sản dựa trên giá trị thực thay vì con số quá khứ.\". Clean text-free visual background. (10s)"
+    ],
+    "video_path": "C:\\Users\\Trung Duc\\Documents\\antigravity\\wise-tesla\\output\\video_20260924_103028.mp4",
+    "video_filename": "video_20260924_103028.mp4",
+    "thumbnail": "/videos/thumb_20260924_103028.jpg",
+    "status": "SUCCESS"
+  },
+  {
     "timestamp": "2026-09-24 09:32:22",
     "date": "2026-09-24",
     "topic": "Tâm lý sợ mất mát (Loss Aversion)",
