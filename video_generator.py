@@ -114,22 +114,25 @@ def configure_flow_settings(page):
         add_log(f"Lưu ý khi chỉnh settings Flow: {e}", level="warning")
         page.keyboard.press("Escape")
 
-def clear_prompt_box_ingredients(page):
-    """Xóa sạch các chips ingredient/reference cũ nếu có trong ô prompt"""
+def clear_prompt_box_ingredients(page, keep_brand_icon: bool = False):
+    """Xóa sạch các chips ingredient/reference cũ nếu có trong ô prompt (tùy chọn giữ lại brand icon)"""
     try:
-        page.evaluate('''() => {
-            const chips = document.querySelectorAll('flow-base-prompt-box mat-chip, flow-base-prompt-box .chip-container, flow-base-prompt-box flow-ingredient-chip');
+        page.evaluate('''(keepBrand) => {
+            const chips = Array.from(document.querySelectorAll('flow-base-prompt-box flow-ingredient-chip, flow-base-prompt-box .chip-container'));
             chips.forEach(c => {
-                const cancelBtn = c.querySelector('button, [aria-label*="Xoá"], [aria-label*="Remove"], mat-icon');
+                if (keepBrand && (c.querySelector('flow-image-ingredient-chip') || c.tagName.toLowerCase().includes('image') || c.querySelector('img.chip-image'))) {
+                    return; // Giữ lại icon thương hiệu brainmoney
+                }
+                const cancelBtn = c.querySelector('button, [aria-label*="Xoá"], [aria-label*="Remove"], [aria-label*="cancel"], mat-icon');
                 if (cancelBtn) cancelBtn.click();
                 else c.click();
             });
-        }''')
+        }''', keep_brand_icon)
         time.sleep(0.3)
     except Exception:
         pass
 
-def attach_previous_video_as_reference(page, ref_clip_index: int) -> bool:
+def attach_previous_video_as_reference(page, ref_clip_index: int, keep_brand_icon: bool = False) -> bool:
     """
     Thêm video clip vừa render xong ở vị trí đầu tiên (Tile 0) làm Reference cho prompt tiếp theo.
     Hỗ trợ đầy đủ cả giao diện Tiếng Việt ('Tuỳ chọn khác' -> 'Thêm vào câu lệnh') và Tiếng Anh.
@@ -137,7 +140,7 @@ def attach_previous_video_as_reference(page, ref_clip_index: int) -> bool:
     try:
         add_log(f"-> Đang gắn Clip {ref_clip_index} làm Reference cho phân cảnh tiếp theo...", level="info")
         
-        clear_prompt_box_ingredients(page)
+        clear_prompt_box_ingredients(page, keep_brand_icon=keep_brand_icon)
 
         tiles = page.locator("flow-tile-container").all()
         if not tiles:
@@ -186,43 +189,117 @@ def attach_previous_video_as_reference(page, ref_clip_index: int) -> bool:
 
 def attach_brand_icon_ingredient(page, asset_name: str = "brainmoney.jpg") -> bool:
     """
-    Gắn asset thương hiệu (brainmoney.jpg) làm Reference/Ingredient cho Clip 3 (Cảnh kết thúc)
+    Gắn asset thương hiệu (brainmoney.jpg) làm Reference/Ingredient cho Clip 3 (Cảnh kết thúc).
+    Tuân thủ chính xác 100% UI workflow theo modal 'Thêm thành phần' của Google Flow:
+    1. Kiểm tra nếu chip hình ảnh đã có sẵn trong ô prompt -> giữ nguyên.
+    2. Mở popup 'Thêm thành phần' (button.add-menu-trigger).
+    3. Tìm và click chọn item 'brainmoney.jpg' trong danh sách.
+    4. Bấm nút 'Thêm vào câu lệnh' (button.detail-add-to-prompt-btn).
     """
     try:
-        add_log(f"-> Đang gắn icon thương hiệu '{asset_name}' làm Reference cho phân cảnh kết...", level="info")
-        
-        # Mở popup Thêm thành phần
+        add_log(f"-> Đang kiểm tra và gắn icon thương hiệu '{asset_name}' làm Reference...", level="info")
+
+        # 1. Kiểm tra xem chip hình ảnh thương hiệu đã có sẵn trong ô prompt chưa
+        has_image_chip = page.evaluate('''() => {
+            const chips = document.querySelectorAll('flow-base-prompt-box flow-image-ingredient-chip, flow-base-prompt-box flow-ingredient-chip img.chip-image');
+            return chips.length > 0;
+        }''')
+        if has_image_chip:
+            add_log(f"-> Icon thương hiệu '{asset_name}' đã có sẵn trong Prompt Box làm Reference!", level="success")
+            return True
+
+        # 2. Mở popup Thêm thành phần từ prompt box
         page.evaluate('''() => {
             const btn = document.querySelector("button.add-menu-trigger, button[aria-label*='Thêm thành phần'], button[aria-label*='Add ingredients']");
             if (btn) btn.click();
         }''')
-        time.sleep(1.0)
+        time.sleep(1.2)
 
-        # Trong menu popover, tìm nút "Thêm vào câu lệnh" cho asset_name
-        success = page.evaluate('''(name) => {
-            const area = document.querySelector('.content-area, .right-panel, .cdk-overlay-container');
-            if (!area) return false;
-            const allItems = Array.from(area.querySelectorAll('*'));
-            const bmItem = allItems.find(e => e.innerText && e.innerText.toLowerCase().includes(name.toLowerCase()) && e.children.length === 0);
+        # 3. Tìm và chọn item brainmoney.jpg trong popover
+        selected = page.evaluate('''(name) => {
+            const popover = document.querySelector('flow-add-menu-popover-content');
+            if (!popover) return false;
+
+            // Thử chuyển sang tab "Tất cả" hoặc "Hình ảnh" nếu có
+            const tabs = Array.from(popover.querySelectorAll('mat-nav-list mat-list-item'));
+            const targetTab = tabs.find(t => t.innerText.includes('Tất cả') || t.innerText.includes('Hình ảnh'));
+            if (targetTab && !targetTab.classList.contains('side-nav-list-item-active')) {
+                targetTab.click();
+            }
+
+            const items = Array.from(popover.querySelectorAll('.asset-item, button[role="option"]'));
+            const bmItem = items.find(el => {
+                const txt = el.innerText || '';
+                return txt.toLowerCase().includes(name.toLowerCase()) || txt.toLowerCase().includes('brainmoney');
+            });
+
             if (bmItem) {
-                const container = bmItem.closest('flow-asset-list-item, .asset-item, div') || bmItem.parentElement;
-                const addBtn = container.querySelector('button') || Array.from(area.querySelectorAll('button')).find(b => b.innerText.includes('Thêm vào câu lệnh') || b.innerText.includes('Add to prompt'));
-                if (addBtn) {
-                    addBtn.click();
-                    return true;
-                }
+                bmItem.click();
+                return true;
             }
             return false;
         }''', asset_name)
 
-        time.sleep(0.8)
-        page.keyboard.press("Escape")
+        if not selected:
+            # Thử gõ tìm kiếm 'brainmoney' trong search-input
+            page.evaluate('''(name) => {
+                const popover = document.querySelector('flow-add-menu-popover-content');
+                if (!popover) return;
+                const inp = popover.querySelector('input.search-input');
+                if (inp) {
+                    inp.value = name.replace('.jpg', '');
+                    inp.dispatchEvent(new Event('input', { bubbles: true }));
+                    inp.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }''', asset_name)
+            time.sleep(1.2)
 
-        if success:
-            add_log(f"-> ĐÃ GẮN THÀNH CÔNG ICON '{asset_name}' VÀO PROMPT BOX LÀM REFERENCE!", level="success")
-            return True
+            selected = page.evaluate('''(name) => {
+                const popover = document.querySelector('flow-add-menu-popover-content');
+                if (!popover) return false;
+                const items = Array.from(popover.querySelectorAll('.asset-item, button[role="option"]'));
+                const bmItem = items.find(el => {
+                    const txt = el.innerText || '';
+                    return txt.toLowerCase().includes(name.toLowerCase()) || txt.toLowerCase().includes('brainmoney');
+                });
+                if (bmItem) {
+                    bmItem.click();
+                    return true;
+                }
+                return false;
+            }''', asset_name)
+
+        if selected:
+            time.sleep(0.8)
+            # 4. Bấm nút "Thêm vào câu lệnh" trong detail pane (.detail-add-to-prompt-btn)
+            added = page.evaluate('''() => {
+                const popover = document.querySelector('flow-add-menu-popover-content');
+                if (!popover) return false;
+                const btn = popover.querySelector('button.detail-add-to-prompt-btn, .bottom-actions button, button[class*="detail-add"]');
+                if (btn && !btn.disabled) {
+                    btn.click();
+                    return true;
+                }
+                const allBtns = Array.from(popover.querySelectorAll('button'));
+                const addBtn = allBtns.find(b => b.innerText.includes('Thêm vào câu lệnh') || b.innerText.includes('Add to prompt'));
+                if (addBtn) {
+                    addBtn.click();
+                    return true;
+                }
+                return false;
+            }''')
+            time.sleep(0.8)
+            page.keyboard.press("Escape")
+
+            if added:
+                add_log(f"-> ĐÃ CHỌN VÀ BẤM 'THÊM VÀO CÂU LỆNH' CHO ICON THƯƠNG HIỆU '{asset_name}' THÀNH CÔNG!", level="success")
+                return True
+            else:
+                add_log("Đã chọn item nhưng chưa kích hoạt được nút 'Thêm vào câu lệnh'.", level="warning")
         else:
-            add_log(f"Không tìm thấy asset '{asset_name}' trong thư viện Google Flow.", level="warning")
+            add_log(f"Không tìm thấy item '{asset_name}' trong danh sách modal.", level="warning")
+            page.keyboard.press("Escape")
+
     except Exception as e:
         add_log(f"Lỗi khi gắn brand icon: {e}", level="warning")
         page.keyboard.press("Escape")
@@ -329,11 +406,11 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
 
             # Xử lý Reference tương ứng từng phân cảnh:
             if idx == 0:
-                clear_prompt_box_ingredients(flow_page)
+                clear_prompt_box_ingredients(flow_page, keep_brand_icon=False)
             elif idx == 1:
-                attach_previous_video_as_reference(flow_page, ref_clip_index=1)
+                attach_previous_video_as_reference(flow_page, ref_clip_index=1, keep_brand_icon=False)
             elif idx == 2:
-                attach_previous_video_as_reference(flow_page, ref_clip_index=2)
+                attach_previous_video_as_reference(flow_page, ref_clip_index=2, keep_brand_icon=True)
                 attach_brand_icon_ingredient(flow_page, "brainmoney.jpg")
                 if "brainmoney" not in prompt_text.lower():
                     prompt_text += " Towards the end of the scene, smoothly feature the brand icon brainmoney.jpg (brain with dollar coin) at the center with a glowing animation transition."
