@@ -1,5 +1,27 @@
 [
   {
+    "timestamp": "2026-09-24 11:27:57",
+    "date": "2026-09-24",
+    "topic": "Hiệu ứng Chi phí Chìm (Sunk Cost Fallacy)",
+    "title": "Bẫy 'Tiếc rẻ' khiến bạn càng đâm đầu càng lỗ nặng!",
+    "hashtags": [
+      "#SunkCostFallacy",
+      "#ChiPhiChim",
+      "#TamLyHocTaiChinh",
+      "#KinhTeHocHanhVi",
+      "#DauTuThongMinh"
+    ],
+    "prompts": [
+      "Simple 2D flat vector animation of a character throwing gold coins into a deep dark well, watching them vanish into the bottom on a minimal pastel background. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Bạn đã bao giờ cố ăn hết một món dở tệ hay tiếp tục ném tiền vào một dự án thua lỗ chỉ vì tiếc số tiền đã bỏ ra chưa?\". Clean text-free visual background. (10s)",
+      "Simple 2D flat vector animation of a sinking ship icon with a character pumping water out frantically while ignoring a glowing rescue boat floating nearby. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Đó chính là bẫy chi phí chìm, khi cảm xúc tiếc nuối quá khứ che mờ lý trí, khiến bạn tiếp tục đưa ra các quyết định sai lầm.\". Clean text-free visual background. (10s)",
+      "Simple 2D flat vector animation of a character cutting a glowing red string attached to a heavy anchor, smoothly sailing away on a bright green speed boat. Spoken Vietnamese voiceover audio by the SAME narrator (consistent young friendly Vietnamese voice): \"Hãy học cách dũng cảm cắt lỗ và tập trung vào giá trị tương lai thay vì cố níu kéo những khoản chi không thể lấy lại.\". Clean text-free visual background. (10s)"
+    ],
+    "video_path": "C:\\Users\\Trung Duc\\Documents\\antigravity\\wise-tesla\\output\\video_20260924_112757.mp4",
+    "video_filename": "video_20260924_112757.mp4",
+    "thumbnail": "/videos/thumb_20260924_112757.jpg",
+    "status": "SUCCESS"
+  },
+  {
     "timestamp": "2026-09-24 10:30:28",
     "date": "2026-09-24",
     "topic": "Hiệu ứng Mỏ neo (Anchoring Effect)",

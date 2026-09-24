@@ -384,10 +384,10 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
 
             add_log(f"-> ĐÃ BẤM BẮT ĐẦU TẠO CLIP {idx + 1}! Đang render qua Omni 1.1 Flash (720p, 10s, 9:16)...", level="success")
 
-            # Chờ video MỚI render hoàn tất trên Canvas (tối thiểu 15s, tối đa 120s)
+            # Chờ video MỚI render hoàn tất trên Canvas (tối thiểu 8s, tối đa 240s)
             new_video_found = False
             
-            for wait_step in range(40):
+            for wait_step in range(80):
                 time.sleep(3.0)
                 elapsed = round(time.time() - gen_timestamp)
 
@@ -444,8 +444,8 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
                     add_log(f"   [Đang render Clip {idx + 1} qua Omni 1.1...] Đã trôi qua {elapsed}s...", level="info")
 
             if not new_video_found:
-                add_log(f"[LỖI] Không thể tải clip {idx + 1} mới sinh sau 120s! Dừng quy trình để không ghép nhầm video cũ.", level="error")
-                raise RuntimeError(f"Google Flow không thể hoàn tất sinh Clip {idx + 1} sau 120s.")
+                add_log(f"[LỖI] Không thể tải clip {idx + 1} mới sinh sau 240s! Dừng quy trình để không ghép nhầm video cũ.", level="error")
+                raise RuntimeError(f"Google Flow không thể hoàn tất sinh Clip {idx + 1} sau 240s.")
 
             time.sleep(2.0)
 
