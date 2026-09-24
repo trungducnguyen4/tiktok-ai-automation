@@ -396,14 +396,16 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
                 new_tile_info = flow_page.evaluate('''(known) => {
                     const knownSet = new Set(known);
                     const tiles = Array.from(document.querySelectorAll("flow-tile-container"));
-                    // Video mới sinh luôn xuất hiện ở vị trí đầu tiên của canvas
+                    // Video mới sinh luôn xuất hiện ở vị trí đầu tiên của canvas (Tile 0 hoặc 1)
                     const checkLimit = Math.min(3, tiles.length);
                     for (let i = 0; i < checkLimit; i++) {
                         const tile = tiles[i];
                         const v = tile.querySelector("video");
-                        // Kiểm tra xem tile có đang trong quá trình render hay không
-                        const isPending = !!tile.querySelector("flow-pending-tile, .progress-bar-fill, .spinner");
-                        if (v && v.src && !knownSet.has(v.src) && !isPending) {
+                        // flow-pending-tile là thẻ chờ sinh của Google Flow
+                        const isPending = !!tile.querySelector("flow-pending-tile");
+                        const hasVideoTile = !!tile.querySelector("flow-video-tile");
+                        
+                        if (hasVideoTile && !isPending && v && v.src && !knownSet.has(v.src)) {
                             if (v.duration > 0 || v.readyState >= 2) {
                                 return {
                                     tileIndex: i,
@@ -416,8 +418,8 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
                     return null;
                 }''', list(known_video_srcs))
 
-                # Đảm bảo video đã thực sự render xong (thời gian tối thiểu 15s để không bị bắt nhầm network glitch)
-                if new_tile_info and elapsed >= 15:
+                # Đảm bảo video đã thực sự render xong (thời gian tối thiểu 8s)
+                if new_tile_info and elapsed >= 8:
                     new_src = new_tile_info["videoSrc"]
                     tile_idx = new_tile_info["tileIndex"]
                     add_log(f"-> Clip mới {idx + 1} đã render hoàn tất tại vị trí thẻ {tile_idx} ({elapsed}s)!", level="success")
