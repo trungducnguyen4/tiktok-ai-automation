@@ -25,9 +25,9 @@ _default_state = {
         "duration": "30s",
         "resolution": "720x1280 (9:16)",
         "file_size": None,
-        "has_audio": False,
-        "has_subtitles": False,
-        "voice_name": "Hoài My (Edge-TTS)"
+        "has_audio": True,
+        "has_subtitles": True,
+        "voice_name": "Gemini Native + Sub TikTok"
     },
     "step4": {
         "status": "IDLE",
@@ -126,7 +126,7 @@ current_pipeline_state["step3"] = {
     "file_size": "3.96 MB",
     "has_audio": True,
     "has_subtitles": True,
-    "voice_name": "Hoài My (Edge-TTS)"
+    "voice_name": "Gemini Native + Sub TikTok"
 }
 
 def get_pipeline_data() -> dict:
