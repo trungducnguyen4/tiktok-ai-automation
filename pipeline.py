@@ -6,14 +6,13 @@ from logger import add_log, clear_logs
 from notebooklm_bot import fetch_notebooklm_prompts
 from video_generator import generate_video_clips
 from video_editor import stitch_videos, synchronize_single_clip
-from tiktok_publisher import publish_to_tiktok
 import pipeline_state
 
 def execute_daily_pipeline(headless: bool = False) -> dict:
     start_time = datetime.datetime.now()
     clear_logs()
     pipeline_state.reset_pipeline_data()
-    add_log("=== KHỞI ĐỘNG QUY TRÌNH TỰ ĐỘNG TẠO VIDEO & ĐĂNG TIKTOK ===", level="info")
+    add_log("=== KHỞI ĐỘNG QUY TRÌNH 3 BƯỚC: TỰ ĐỘNG TẠO VIDEO TIKTOK ===", level="info")
 
     status_report = {
         "start_time": str(start_time),
@@ -26,7 +25,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
 
     try:
         # Bước 1: Mở NotebookLM
-        add_log("[Bước 1/4] Đang mở NotebookLM để lấy chủ đề ngẫu nhiên và kịch bản 3 prompt...", level="info")
+        add_log("[Bước 1/3] Đang mở NotebookLM để lấy chủ đề ngẫu nhiên và kịch bản 3 prompt...", level="info")
         pipeline_state.update_step_data("step1", {"status": "RUNNING"})
         script_data = fetch_notebooklm_prompts(headless=headless)
         
@@ -62,7 +61,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
             add_log(f"Cảnh báo: Chỉ nhận được {len(prompts)} prompt thay vì 3 prompt.", level="warning")
 
         # Bước 2: Sinh 3 clip video qua Google Flow
-        add_log("[Bước 2/4] Đang chuyển 3 prompt sang Google Flow (Omni 1.1) để render clip...", level="info")
+        add_log("[Bước 2/3] Đang chuyển 3 prompt sang Google Flow (Omni 1.1) để render clip...", level="info")
         pipeline_state.update_step_data("step2", {"status": "RUNNING"})
         clip_paths = generate_video_clips(prompts[:3], headless=headless)
         
@@ -88,7 +87,7 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
         add_log(f"-> Đã tạo thành công {len(clip_paths)}/3 clip video 10s (kèm âm thanh gốc Gemini)!", level="success")
 
         # Bước 3: Nối clip + giữ âm thanh gốc Gemini + tạo phụ đề chuẩn TikTok
-        add_log("[Bước 3/4] Đang dùng MoviePy nối các clip, giữ âm thanh gốc Gemini và tạo phụ đề TikTok...", level="info")
+        add_log("[Bước 3/3] Đang dùng MoviePy nối các clip, giữ âm thanh gốc Gemini và tạo phụ đề TikTok...", level="info")
         pipeline_state.update_step_data("step3", {"status": "RUNNING"})
         final_video_path = stitch_videos(
             clip_paths=clip_paths,
@@ -113,32 +112,15 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
         })
         add_log(f"-> Video 30s hoàn chỉnh (âm thanh gốc Gemini + phụ đề TikTok) đã được xuất tại: {final_video_path}", level="success")
 
-        # Bước 4: Đăng lên TikTok Studio
-        add_log("[Bước 4/4] Đang mở TikTok Studio để tải video và xuất bản...", level="info")
-        pipeline_state.update_step_data("step4", {
-            "status": "RUNNING",
-            "tiktok_title": title
-        })
-        publish_success = publish_to_tiktok(
-            video_path=final_video_path,
-            title=title,
-            hashtags=hashtags,
-            headless=headless
-        )
-
-        pipeline_state.update_step_data("step4", {
-            "status": "COMPLETED" if publish_success else "ERROR",
-            "tiktok_title": title,
-            "publish_status": "Đã xuất bản thành công lên TikTok Studio" if publish_success else "Chưa hoàn tất xuất bản"
-        })
-
-        if publish_success:
-            status_report["status"] = "SUCCESS"
-            add_log("-> XUẤT BẢN THÀNH CÔNG! Video đã được đăng trực tiếp lên TikTok Studio!", level="success")
-            add_log("=== QUY TRÌNH ĐÃ HOÀN TẤT TRỌN VẸN 100% ===", level="success")
-        else:
-            status_report["status"] = "UPLOAD_FAILED"
-            add_log("-> Không thể hoàn tất nút Publish trên TikTok Studio (vui lòng kiểm tra đăng nhập hoặc duyệt nháp).", level="error")
+        # Hoàn tất quy trình 3 bước: In rõ Tiêu đề, Hashtags và Caption để người dùng tự đăng TikTok
+        tag_str = ' '.join(hashtags)
+        status_report["status"] = "SUCCESS"
+        add_log("=== QUY TRÌNH 3 BƯỚC HOÀN TẤT THÀNH CÔNG 100%! ===", level="success")
+        add_log(f"-> [1] TIÊU ĐỀ TIKTOK: {title}", level="success")
+        add_log(f"-> [2] BỘ HASHTAGS: {tag_str}", level="success")
+        add_log(f"-> [3] NỘI DUNG CAPTION HOÀN CHỈNH:\n{title}\n\n{tag_str}", level="info")
+        add_log(f"-> [4] FILE VIDEO 30S: {final_video_path}", level="success")
+        add_log("-> SẴN SÀNG ĐĂNG: Bạn có thể tải video từ Dashboard và copy Tiêu đề + Hashtags để đăng thủ công lên TikTok!", level="success")
 
         # Lưu file video phiên bản riêng và tạo thumbnail riêng biệt cho lịch sử
         import shutil

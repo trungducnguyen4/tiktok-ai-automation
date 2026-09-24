@@ -28,11 +28,6 @@ _default_state = {
         "has_audio": True,
         "has_subtitles": True,
         "voice_name": "Gemini Native + Sub TikTok"
-    },
-    "step4": {
-        "status": "IDLE",
-        "tiktok_title": None,
-        "publish_status": "IDLE"
     }
 }
 

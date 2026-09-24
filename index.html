@@ -118,22 +118,22 @@
                     </div>
                 </div>
 
-                <!-- TikTok Studio -->
+                <!-- Kênh TikTok -->
                 <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 flex flex-col justify-between space-y-3">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2.5">
                             <div class="w-8 h-8 rounded-lg bg-pink-500/10 text-pink-400 flex items-center justify-center text-sm border border-pink-500/20">
                                 <i class="fa-brands fa-tiktok"></i>
                             </div>
-                            <span class="text-xs font-bold text-slate-200">TikTok Studio</span>
+                            <span class="text-xs font-bold text-slate-200">Kênh TikTok</span>
                         </div>
                         <span id="badge-tiktok" class="text-[11px] px-2.5 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                            <i class="fa-solid fa-circle-check"></i> Đã kết nối
+                            <i class="fa-solid fa-user-check"></i> Đăng thủ công
                         </span>
                     </div>
                     <div class="bg-slate-950/60 p-2 rounded-lg border border-slate-800/80">
-                        <div class="text-[10px] text-slate-400 uppercase font-semibold">Trạng thái đăng:</div>
-                        <div id="acc-tiktok" class="text-xs font-medium text-pink-300 truncate mt-0.5">Auto Upload & Publish</div>
+                        <div class="text-[10px] text-slate-400 uppercase font-semibold">Chế độ xuất bản:</div>
+                        <div id="acc-tiktok" class="text-xs font-medium text-pink-300 truncate mt-0.5">Tải video & Copy Caption</div>
                     </div>
                 </div>
             </div>
@@ -159,8 +159,8 @@
                 </div>
             </div>
 
-            <!-- Flowchart Nodes Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative">
+            <!-- Flowchart Nodes Grid: 3 Flows Hoàn Chỉnh -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 relative">
                 
                 <!-- NODE 1: NotebookLM Script Data -->
                 <div id="flow-node-1" class="bg-slate-900/80 rounded-xl p-4 border border-slate-800 hover:border-indigo-500/50 transition-all duration-300 flex flex-col justify-between shadow-lg">
@@ -184,7 +184,7 @@
                     </div>
                     <button onclick="openDataInspector('step1')" class="mt-3 w-full py-1.5 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/50 text-indigo-300 hover:text-white border border-indigo-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
                         <i class="fa-solid fa-code"></i>
-                        <span>Xem Kịch Bản, Voice & Sub</span>
+                        <span>Xem Kịch Bản & Voice</span>
                     </button>
                 </div>
 
@@ -214,56 +214,36 @@
                     </button>
                 </div>
 
-                <!-- NODE 3: MoviePy 30s TikTok Video -->
-                <div id="flow-node-3" class="bg-slate-900/80 rounded-xl p-4 border border-slate-800 hover:border-blue-500/50 transition-all duration-300 flex flex-col justify-between shadow-lg">
+                <!-- NODE 3: MoviePy 30s TikTok Video & Sẵn Sàng Đăng -->
+                <div id="flow-node-3" class="bg-slate-900/80 rounded-xl p-4 border border-slate-800 hover:border-emerald-500/50 transition-all duration-300 flex flex-col justify-between shadow-lg">
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Node 3</span>
+                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Node 3 (Hoàn tất)</span>
                             <span id="badge-node-3" class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400">Chờ ghép</span>
                         </div>
                         <div class="font-bold text-sm text-slate-200 flex items-center gap-2 mb-2">
-                            <i class="fa-solid fa-scissors text-blue-400"></i> Nối Video MoviePy
+                            <i class="fa-solid fa-scissors text-emerald-400"></i> Video 30s & Phụ Đề TikTok
                         </div>
                         <!-- Mini Data Preview -->
                         <div class="bg-slate-950/70 rounded-lg p-2.5 space-y-1.5 text-[11px] border border-slate-800/80">
-                            <div><span class="text-slate-500">Thời lượng ghép:</span> <span class="text-blue-300 font-medium">30 giây chuẩn</span></div>
+                            <div><span class="text-slate-500">Thời lượng ghép:</span> <span class="text-emerald-300 font-medium">30 giây chuẩn (3 clips)</span></div>
                             <div><span class="text-slate-500">Giọng đọc & Chữ:</span> <span id="df-voice" class="text-emerald-400 font-medium">Gemini Native + Sub TikTok</span></div>
                             <div class="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
-                                <span class="text-slate-500">Dung lượng file:</span>
-                                <span id="df-filesize" class="font-semibold text-blue-400">--</span>
+                                <span class="text-slate-500">Trạng thái:</span>
+                                <span id="df-filesize" class="font-semibold text-emerald-400">Sẵn sàng tải & đăng</span>
                             </div>
                         </div>
                     </div>
-                    <button onclick="openDataInspector('step3')" class="mt-3 w-full py-1.5 rounded-lg bg-blue-950/40 hover:bg-blue-900/50 text-blue-300 hover:text-white border border-blue-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
-                        <i class="fa-solid fa-play"></i>
-                        <span>Xem Video 30s (Có Tiếng + Chữ)</span>
-                    </button>
-                </div>
-
-                <!-- NODE 4: TikTok Studio Publish -->
-                <div id="flow-node-4" class="bg-slate-900/80 rounded-xl p-4 border border-slate-800 hover:border-pink-500/50 transition-all duration-300 flex flex-col justify-between shadow-lg">
-                    <div>
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20">Node 4</span>
-                            <span id="badge-node-4" class="text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400">Chờ upload</span>
-                        </div>
-                        <div class="font-bold text-sm text-slate-200 flex items-center gap-2 mb-2">
-                            <i class="fa-brands fa-tiktok text-pink-400"></i> TikTok Studio
-                        </div>
-                        <!-- Mini Data Preview -->
-                        <div class="bg-slate-950/70 rounded-lg p-2.5 space-y-1.5 text-[11px] border border-slate-800/80">
-                            <div><span class="text-slate-500">Kênh:</span> <span class="text-pink-300 font-medium">Auto-Publisher</span></div>
-                            <div><span class="text-slate-500">Trạng thái:</span> <span id="df-tiktok-status" class="text-slate-300">Sẵn sàng</span></div>
-                            <div class="flex items-center justify-between pt-1 border-t border-slate-800 text-[10px]">
-                                <span class="text-slate-500">Tiến độ:</span>
-                                <span id="df-tiktok-percent" class="font-semibold text-pink-400">Chờ phát hành</span>
-                            </div>
-                        </div>
+                    <div class="space-y-1.5 mt-3">
+                        <button onclick="openDataInspector('step3')" class="w-full py-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 hover:text-white border border-emerald-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Xem Video 30s & Lấy Caption</span>
+                        </button>
+                        <button onclick="copyCurrentCaption()" class="w-full py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-medium flex items-center justify-center space-x-1 transition">
+                            <i class="fa-regular fa-copy"></i>
+                            <span>Copy Tiêu Đề & Hashtags</span>
+                        </button>
                     </div>
-                    <button onclick="openDataInspector('step4')" class="mt-3 w-full py-1.5 rounded-lg bg-pink-950/40 hover:bg-pink-900/50 text-pink-300 hover:text-white border border-pink-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
-                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
-                        <span>Chi Tiết Xuất Bản</span>
-                    </button>
                 </div>
             </div>
         </div>
@@ -723,93 +703,88 @@
 
             } else if (stepKey === 'step3') {
                 const s3 = data.step3 || {};
-                titleEl.innerText = "Node 3: Video Ghép 30s + Giọng Đọc AI + Chữ Chạy TikTok";
-                subEl.innerText = "Đã tổng hợp 3 clips 10s, lồng track thuyết minh tiếng Việt và phủ chữ chạy viền đen chữ vàng";
-                iconEl.innerHTML = '<i class="fa-solid fa-scissors text-blue-400"></i>';
-                badgeEl.innerText = s3.status || 'CHỜ GHÉP';
+                const s1 = data.step1 || {};
+                const title = s1.title || 'Chưa có tiêu đề';
+                const hashtags = (s1.hashtags || []).join(' ') || '#ai #trending';
+                const fullCaption = `${title}\n\n${hashtags}`;
+
+                titleEl.innerText = "Node 3: Video 30s TikTok & Sẵn Sàng Xuất Bản";
+                subEl.innerText = "Đã nối 3 clips 10s hoàn chỉnh, giữ âm thanh gốc Gemini và phủ phụ đề TikTok chuẩn tiếng Việt";
+                iconEl.innerHTML = '<i class="fa-solid fa-scissors text-emerald-400"></i>';
+                badgeEl.innerText = s3.status === 'COMPLETED' ? 'SẴN SÀNG ĐĂNG' : (s3.status || 'CHỜ GHÉP');
                 badgeEl.className = s3.status === 'COMPLETED' ? 'text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700';
 
                 body.innerHTML = `
-                    <div class="flex flex-col md:flex-row gap-6 items-center">
-                        <div class="w-full md:w-1/2 flex justify-center">
-                            <video src="${s3.video_url || '/videos/final_tiktok_video.mp4'}" controls class="max-h-80 aspect-[9/16] rounded-xl bg-black shadow-xl"></video>
+                    <div class="flex flex-col lg:flex-row gap-6 items-start">
+                        <!-- Cột trái: Trình phát video 30s -->
+                        <div class="w-full lg:w-1/2 flex flex-col items-center space-y-3">
+                            <video src="${s3.video_url || '/videos/final_tiktok_video.mp4'}" controls class="max-h-96 aspect-[9/16] rounded-xl bg-black shadow-2xl border border-slate-800"></video>
+                            <a href="${s3.video_url || '/videos/final_tiktok_video.mp4'}" download class="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center justify-center space-x-2 transition shadow-lg shadow-emerald-600/30">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Tải Video 30s TikTok MP4 (Có Tiếng + Chữ)</span>
+                            </a>
                         </div>
-                        <div class="w-full md:w-1/2 space-y-4">
+
+                        <!-- Cột phải: Thông số kỹ thuật & Khung Copy Caption TikTok -->
+                        <div class="w-full lg:w-1/2 space-y-4">
+                            <!-- Khung Copy Caption trực tiếp -->
+                            <div class="bg-indigo-950/40 p-4 rounded-xl border border-indigo-700/50 space-y-3">
+                                <div class="flex items-center justify-between pb-2 border-b border-indigo-800/60">
+                                    <span class="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                                        <i class="fa-brands fa-tiktok text-pink-400"></i> Sẵn Sàng Đăng TikTok Thủ Công
+                                    </span>
+                                    <button onclick="copyFullTikTokPost('${escapeHtml(title)}', '${escapeHtml(hashtags)}')" class="px-2.5 py-1 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs flex items-center gap-1.5 transition shadow-lg shadow-pink-600/30">
+                                        <i class="fa-regular fa-copy"></i> Copy Toàn Bộ Caption
+                                    </button>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Tiêu đề TikTok:</div>
+                                    <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-100 font-semibold text-xs flex items-center justify-between">
+                                        <span class="truncate flex-1 select-all">${escapeHtml(title)}</span>
+                                        <button onclick="copyText('${escapeHtml(title)}')" class="text-slate-400 hover:text-white text-xs ml-2">
+                                            <i class="fa-regular fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="space-y-1">
+                                    <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Hashtags đề xuất:</div>
+                                    <div class="p-2.5 rounded-lg bg-slate-950 border border-slate-800 text-pink-300 font-mono text-xs flex items-center justify-between">
+                                        <span class="truncate flex-1 select-all">${escapeHtml(hashtags)}</span>
+                                        <button onclick="copyText('${escapeHtml(hashtags)}')" class="text-slate-400 hover:text-white text-xs ml-2">
+                                            <i class="fa-regular fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Thông số kỹ thuật -->
                             <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
-                                <div class="text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Thông số kỹ thuật Video:</div>
+                                <div class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Thông số Video đã xuất:</div>
                                 <div class="flex justify-between py-1 border-b border-slate-800">
                                     <span class="text-slate-400">Tổng thời lượng:</span>
-                                    <strong class="text-white">${s3.duration || '30 giây'}</strong>
+                                    <strong class="text-white">${s3.duration || '30 giây (3 clips)'}</strong>
                                 </div>
                                 <div class="flex justify-between py-1 border-b border-slate-800">
                                     <span class="text-slate-400">Độ phân giải:</span>
                                     <strong class="text-white">${s3.resolution || '720x1280 (9:16 Dọc)'}</strong>
                                 </div>
                                 <div class="flex justify-between py-1 border-b border-slate-800">
-                                    <span class="text-slate-400">Dung lượng:</span>
+                                    <span class="text-slate-400">Dung lượng file:</span>
                                     <strong class="text-emerald-400">${s3.file_size || '--'}</strong>
                                 </div>
                                 <div class="flex justify-between py-1 border-b border-slate-800">
                                     <span class="text-slate-400">Giọng đọc thuyết minh:</span>
                                     <span class="text-pink-300 font-semibold flex items-center gap-1">
-                                        <i class="fa-solid fa-microphone text-[10px]"></i> ${s3.voice_name || 'Google Flow Native (Tích hợp Prompt)'}
+                                        <i class="fa-solid fa-microphone text-[10px]"></i> ${s3.voice_name || 'Gemini Native (Google Flow)'}
                                     </span>
                                 </div>
                                 <div class="flex justify-between py-1 border-b border-slate-800">
                                     <span class="text-slate-400">Chữ chạy TikTok:</span>
                                     <span class="text-amber-300 font-semibold flex items-center gap-1">
-                                        <i class="fa-solid fa-closed-captioning text-[10px]"></i> Viền đen chữ vàng (3 cảnh)
+                                        <i class="fa-solid fa-closed-captioning text-[10px]"></i> Viền đen chữ vàng chuẩn 100% tiếng Việt
                                     </span>
                                 </div>
-                                <div class="flex justify-between py-1 border-b border-slate-800">
-                                    <span class="text-slate-400">Engine biên tập:</span>
-                                    <span class="text-slate-300">MoviePy &bull; FFmpeg GPU/CPU</span>
-                                </div>
                             </div>
-                            <a href="${s3.video_url || '/videos/final_tiktok_video.mp4'}" download class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-lg shadow-blue-600/30">
-                                <i class="fa-solid fa-download"></i>
-                                <span>Tải Video 30s TikTok MP4 (Có Tiếng + Chữ)</span>
-                            </a>
-                        </div>
-                    </div>
-                `;
-
-            } else if (stepKey === 'step4') {
-                const s4 = data.step4 || {};
-                titleEl.innerText = "Node 4: TikTok Studio Auto-Publisher";
-                subEl.innerText = "Tải lên, áp dụng caption, hashtags và kích hoạt nút Xuất bản";
-                iconEl.innerHTML = '<i class="fa-brands fa-tiktok text-pink-400"></i>';
-                badgeEl.innerText = s4.status || 'CHỜ UPLOAD';
-                badgeEl.className = s4.status === 'COMPLETED' ? 'text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-800 text-slate-400 border border-slate-700';
-
-                body.innerHTML = `
-                    <div class="space-y-4">
-                        <div class="bg-slate-900/90 p-4 rounded-xl border border-slate-800 space-y-3">
-                            <div class="flex items-center justify-between text-xs">
-                                <span class="font-bold text-pink-400">Trạng thái xuất bản:</span>
-                                <span class="px-2 py-0.5 rounded text-[11px] font-semibold ${s4.status === 'COMPLETED' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-400'}">
-                                    ${escapeHtml(s4.publish_status || 'Chờ kích hoạt')}
-                                </span>
-                            </div>
-                            <div class="text-xs space-y-1">
-                                <span class="text-slate-400 font-medium">Tiêu đề video hiển thị trên TikTok:</span>
-                                <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-slate-200 font-semibold flex items-center justify-between">
-                                    <span>${escapeHtml(s4.tiktok_title || data.step1?.title || 'Chưa có tiêu đề')}</span>
-                                    <button onclick="copyText('${escapeHtml(s4.tiktok_title || data.step1?.title || '')}')" class="text-slate-400 hover:text-white text-xs">
-                                        <i class="fa-regular fa-copy"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="bg-pink-950/20 p-4 rounded-xl border border-pink-500/30 space-y-2 text-xs">
-                            <div class="flex items-center space-x-2 text-pink-400 font-bold">
-                                <i class="fa-solid fa-circle-check"></i>
-                                <span>Cơ chế Auto-Publish TikTok Creator Center:</span>
-                            </div>
-                            <p class="text-slate-300 leading-relaxed">
-                                Bot tự động chọn file MP4 từ <code class="bg-slate-900 px-1 py-0.5 rounded text-pink-300">output/final_tiktok_video.mp4</code>, điền caption kết hợp tiêu đề & bộ 5 hashtags, và kích hoạt phát hành công khai.
-                            </p>
                         </div>
                     </div>
                 `;
@@ -857,8 +832,33 @@
             }
         }
 
+        function copyFullTikTokPost(title, hashtags) {
+            const cleanTitle = (title || '').trim();
+            const cleanTags = (hashtags || '').trim();
+            const fullText = cleanTitle ? `${cleanTitle}\n\n${cleanTags}` : cleanTags;
+            navigator.clipboard.writeText(fullText);
+            alert("Đã sao chép Tiêu đề & Hashtags vào Clipboard! Bạn có thể mở TikTok và dán trực tiếp để đăng video.");
+        }
+
+        async function copyCurrentCaption() {
+            try {
+                const res = await fetch('/api/pipeline-state');
+                const data = await res.json();
+                const s1 = data.step1 || {};
+                const title = s1.title || '';
+                const hashtags = (s1.hashtags || []).join(' ');
+                if (!title && !hashtags) {
+                    alert("Chưa có kịch bản tiêu đề/hashtags để sao chép!");
+                    return;
+                }
+                copyFullTikTokPost(title, hashtags);
+            } catch (e) {
+                alert("Lỗi sao chép: " + e);
+            }
+        }
+
         function resetSteps() {
-            for (let i = 1; i <= 4; i++) {
+            for (let i = 1; i <= 3; i++) {
                 setStepStatus(i, 'pending');
             }
             const overall = document.getElementById('overall-step-badge');
@@ -869,24 +869,24 @@
         }
 
         function setStepStatus(stepNum, status) {
-            const card = document.getElementById(`step-card-${stepNum}`);
-            const badge = document.getElementById(`step-badge-${stepNum}`);
+            const card = document.getElementById(`flow-node-${stepNum}`) || document.getElementById(`step-card-${stepNum}`);
+            const badge = document.getElementById(`badge-node-${stepNum}`) || document.getElementById(`step-badge-${stepNum}`);
             if (!card || !badge) return;
 
             if (status === 'pending') {
-                card.className = 'bg-slate-900/60 p-4 rounded-xl border border-slate-800 transition duration-300';
+                card.className = 'bg-slate-900/80 rounded-xl p-4 border border-slate-800 transition duration-300 flex flex-col justify-between shadow-lg';
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400';
                 badge.innerHTML = 'Chờ thực thi';
             } else if (status === 'running') {
-                card.className = 'bg-amber-950/20 p-4 rounded-xl border border-amber-500/40 shadow-lg shadow-amber-500/10 transition duration-300';
+                card.className = 'bg-amber-950/20 rounded-xl p-4 border border-amber-500/40 shadow-lg shadow-amber-500/10 transition duration-300 flex flex-col justify-between';
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1';
                 badge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang chạy...';
             } else if (status === 'completed') {
-                card.className = 'bg-emerald-950/20 p-4 rounded-xl border border-emerald-500/40 shadow-lg shadow-emerald-500/10 transition duration-300';
+                card.className = 'bg-emerald-950/20 rounded-xl p-4 border border-emerald-500/40 shadow-lg shadow-emerald-500/10 transition duration-300 flex flex-col justify-between';
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1';
                 badge.innerHTML = '<i class="fa-solid fa-check"></i> Hoàn thành';
             } else if (status === 'error') {
-                card.className = 'bg-rose-950/20 p-4 rounded-xl border border-rose-500/40 shadow-lg shadow-rose-500/10 transition duration-300';
+                card.className = 'bg-rose-950/20 rounded-xl p-4 border border-rose-500/40 shadow-lg shadow-rose-500/10 transition duration-300 flex flex-col justify-between';
                 badge.className = 'text-[10px] px-2 py-0.5 rounded-full font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1';
                 badge.innerHTML = '<i class="fa-solid fa-xmark"></i> Lỗi';
             }
@@ -937,35 +937,31 @@
                     }).join('');
                     terminal.scrollTop = terminal.scrollHeight;
 
-                    // Tự động phân tích logs để cập nhật trạng thái 4 bước
+                    // Tự động phân tích logs để cập nhật trạng thái 3 bước
                     logs.forEach(l => {
                         const msg = l.message;
-                        if (msg.includes("[Bước 1/4]") || msg.includes("Mở NotebookLM")) {
+                        if (msg.includes("[Bước 1/3]") || msg.includes("Mở NotebookLM")) {
                             setStepStatus(1, 'running');
                         }
-                        if (msg.includes("Đã trích xuất thành công 3 prompts") || msg.includes("[Bước 2/4]")) {
+                        if (msg.includes("Đã trích xuất thành công") || msg.includes("[Bước 2/3]")) {
                             setStepStatus(1, 'completed');
                             setStepStatus(2, 'running');
                         }
-                        if (msg.includes("Hoàn tất quá trình sinh video trên Google Flow") || msg.includes("[Bước 3/4]")) {
+                        if (msg.includes("Hoàn tất quá trình sinh video") || msg.includes("[Bước 3/3]")) {
                             setStepStatus(2, 'completed');
                             setStepStatus(3, 'running');
                         }
-                        if (msg.includes("Video 30s hoàn chỉnh đã được xuất") || msg.includes("[Bước 4/4]")) {
+                        if (msg.includes("QUY TRÌNH 3 BƯỚC HOÀN TẤT") || msg.includes("SẴN SÀNG ĐĂNG") || msg.includes("TIÊU ĐỀ TIKTOK:")) {
                             setStepStatus(3, 'completed');
-                            setStepStatus(4, 'running');
-                        }
-                        if (msg.includes("XUẤT BẢN THÀNH CÔNG") || msg.includes("QUY TRÌNH ĐÃ HOÀN TẤT")) {
-                            setStepStatus(4, 'completed');
                             const overall = document.getElementById('overall-step-badge');
                             if (overall) {
                                 overall.className = 'text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-                                overall.innerText = 'Hoàn tất 100%';
+                                overall.innerText = 'Hoàn tất 100% (Sẵn sàng đăng)';
                             }
                         }
                         if (l.level === 'error') {
-                            for (let s = 1; s <= 4; s++) {
-                                const badge = document.getElementById(`step-badge-${s}`);
+                            for (let s = 1; s <= 3; s++) {
+                                const badge = document.getElementById(`badge-node-${s}`) || document.getElementById(`step-badge-${s}`);
                                 if (badge && badge.innerText.includes('Đang chạy')) {
                                     setStepStatus(s, 'error');
                                 }
