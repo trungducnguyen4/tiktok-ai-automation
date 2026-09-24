@@ -396,8 +396,12 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
             add_log(f"-> Đang gửi Prompt Clip {idx + 1}/{len(prompts)} vào Google Flow...", level="info")
             add_log(f"   \"{prompt_text[:85]}...\"", level="info")
 
-            # Đếm số lượng tile hiện tại trước khi tạo mới
-            initial_tiles = flow_page.evaluate('() => document.querySelectorAll("flow-tile-container").length')
+            # Ghi nhận toàn bộ video URLs hiện có trên DOM và Network trước khi bấm tạo
+            known_video_srcs = set(flow_page.evaluate('''() => {
+                return Array.from(document.querySelectorAll("flow-tile-container video"))
+                    .map(v => v.src)
+                    .filter(Boolean);
+            }'''))
             known_urls_before = set(captured_video_urls)
             gen_timestamp = time.time()
 
@@ -435,53 +439,68 @@ def generate_video_clips(prompts: list[str], headless: bool = False) -> list[str
 
             add_log(f"-> ĐÃ BẤM BẮT ĐẦU TẠO CLIP {idx + 1}! Đang render qua Omni 1.1 Flash (720p, 9:16)...", level="success")
 
-            # Chờ video render xong và xuất hiện trên Canvas (~20-55s)
+            # Chờ video MỚI render xong và xuất hiện trên Canvas (tối đa 100s)
             new_video_found = False
             
-            for wait_step in range(35):
+            for wait_step in range(40):
                 time.sleep(2.5)
                 elapsed = round(time.time() - gen_timestamp)
 
-                # Kiểm tra 1: Xem thẻ đầu tiên trên canvas đã render xong chưa
-                current_tiles = flow_page.evaluate('() => document.querySelectorAll("flow-tile-container").length')
-                
-                # Sau ít nhất 15 giây, kiểm tra xem thẻ đầu tiên đã có menu hoàn tất chưa
-                if elapsed >= 15:
-                    # Kiểm tra xem thẻ mới nhất đã sẵn sàng để tải chưa
-                    if download_tile_via_menu(flow_page, 0, target_filename):
+                # Kiểm tra 1: Xem trên DOM có thẻ tile nào chứa video MỚI (src chưa từng xuất hiện trước đó)
+                new_tile_info = flow_page.evaluate('''(known) => {
+                    const knownSet = new Set(known);
+                    const tiles = Array.from(document.querySelectorAll("flow-tile-container"));
+                    for (let i = 0; i < tiles.length; i++) {
+                        const v = tiles[i].querySelector("video");
+                        if (v && v.src && !knownSet.has(v.src)) {
+                            return { tileIndex: i, videoSrc: v.src };
+                        }
+                    }
+                    return null;
+                }''', list(known_video_srcs))
+
+                if new_tile_info:
+                    tile_idx = new_tile_info["tileIndex"]
+                    new_src = new_tile_info["videoSrc"]
+                    add_log(f"-> Clip mới {idx + 1} đã render hoàn tất tại thẻ {tile_idx} ({elapsed}s)!", level="success")
+                    
+                    # 1a. Tải chất lượng chuẩn 720p qua menu chính thức
+                    if download_tile_via_menu(flow_page, tile_idx, target_filename):
                         size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
                         add_log(f"-> ĐÃ TẢI XONG CLIP {idx + 1}/{len(prompts)} TỪ MENU GOOGLE FLOW! ({size_mb} MB, {elapsed}s)", level="success")
                         downloaded_files.append(str(target_filename))
                         new_video_found = True
                         break
 
+                    # 1b. Fallback tải trực tiếp từ stream URL mới này nếu menu bận
+                    if download_video_via_browser(flow_page, new_src, target_filename):
+                        size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
+                        add_log(f"-> ĐÃ TẢI XONG CLIP {idx + 1}/{len(prompts)} QUA STREAM URL MỚI! ({size_mb} MB)", level="success")
+                        downloaded_files.append(str(target_filename))
+                        new_video_found = True
+                        break
+
                 # Kiểm tra 2: Kiểm tra URL mới phát sinh qua Network stream
+                new_net_url = None
                 for u in captured_video_urls:
                     if u not in known_urls_before:
-                        add_log(f"-> Đã phát hiện stream video mới ({elapsed}s)! Đang tải clip {idx + 1}...", level="info")
-                        if download_video_via_browser(flow_page, u, target_filename):
-                            size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
-                            add_log(f"-> Đã tải thành công clip {idx + 1}/{len(prompts)} về máy! ({size_mb} MB)", level="success")
-                            downloaded_files.append(str(target_filename))
-                            new_video_found = True
-                            break
-                if new_video_found:
-                    break
+                        new_net_url = u
+                        break
 
-                if wait_step % 6 == 0 and elapsed > 0:
-                    add_log(f"   [Đang render Clip {idx + 1}...] Đã trôi qua {elapsed}s...", level="info")
+                if new_net_url:
+                    add_log(f"-> Đã phát hiện stream video mới ({elapsed}s)! Đang tải clip {idx + 1}...", level="info")
+                    if download_video_via_browser(flow_page, new_net_url, target_filename):
+                        size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
+                        add_log(f"-> Đã tải thành công clip {idx + 1}/{len(prompts)} về máy! ({size_mb} MB)", level="success")
+                        downloaded_files.append(str(target_filename))
+                        new_video_found = True
+                        break
 
-            # Nếu sau vòng lặp vẫn chưa tải được, thử tải lại từ thẻ 0 một lần nữa
-            if not new_video_found:
-                add_log(f"-> Đang thực hiện nỗ lực tải cuối cùng cho Clip {idx + 1}...", level="info")
-                if download_tile_via_menu(flow_page, 0, target_filename):
-                    size_mb = round(target_filename.stat().st_size / (1024 * 1024), 2)
-                    add_log(f"-> Đã tải thành công clip {idx + 1}/{len(prompts)} về máy! ({size_mb} MB)", level="success")
-                    downloaded_files.append(str(target_filename))
-                    new_video_found = True
+                if wait_step % 5 == 0 and elapsed > 0:
+                    add_log(f"   [Đang render Clip {idx + 1} qua Omni 1.1...] Đã trôi qua {elapsed}s...", level="info")
 
             if not new_video_found:
-                add_log(f"[CẢNH BÁO] Không thể tải clip {idx + 1} mới sinh. Hệ thống sẽ không tái sử dụng file cũ để tránh sai lệch kịch bản!", level="error")
+                add_log(f"[CẢNH BÁO] Không thể tải clip {idx + 1} mới sinh. Tuyệt đối không tái sử dụng file cũ để tránh sai lệch kịch bản!", level="error")
 
             time.sleep(2.0)
 

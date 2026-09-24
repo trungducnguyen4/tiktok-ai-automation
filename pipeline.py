@@ -140,6 +140,27 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
             status_report["status"] = "UPLOAD_FAILED"
             add_log("-> Không thể hoàn tất nút Publish trên TikTok Studio (vui lòng kiểm tra đăng nhập hoặc duyệt nháp).", level="error")
 
+        # Lưu file video phiên bản riêng và tạo thumbnail riêng biệt cho lịch sử
+        import shutil
+        run_id = start_time.strftime("%Y%m%d_%H%M%S")
+        versioned_filename = f"video_{run_id}.mp4"
+        versioned_path = config.OUTPUT_DIR / versioned_filename
+        try:
+            shutil.copy2(final_video_path, versioned_path)
+        except Exception:
+            versioned_filename = "final_tiktok_video.mp4"
+            versioned_path = Path(final_video_path)
+
+        thumb_filename = f"thumb_{run_id}.jpg"
+        thumb_path = config.OUTPUT_DIR / thumb_filename
+        try:
+            from moviepy import VideoFileClip
+            v_clip = VideoFileClip(str(final_video_path))
+            v_clip.save_frame(str(thumb_path), t=min(1.0, max(0.1, v_clip.duration / 2)))
+            v_clip.close()
+        except Exception as e:
+            add_log(f"Lưu ý tạo thumbnail: {e}", level="warning")
+
         # Lưu lịch sử
         db.save_history_item({
             "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -148,8 +169,9 @@ def execute_daily_pipeline(headless: bool = False) -> dict:
             "title": title,
             "hashtags": hashtags,
             "prompts": prompts,
-            "video_path": final_video_path,
-            "video_filename": "final_tiktok_video.mp4",
+            "video_path": str(versioned_path),
+            "video_filename": versioned_filename,
+            "thumbnail": f"/videos/{thumb_filename}" if thumb_path.exists() else None,
             "status": status_report["status"]
         })
 
