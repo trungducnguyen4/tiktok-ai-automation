@@ -31,10 +31,44 @@
         </div>
 
         <div class="flex items-center space-x-3">
-            <button onclick="triggerWorkflow()" id="btn-trigger" class="px-5 py-2.5 rounded-xl font-medium text-sm bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white shadow-lg shadow-rose-600/30 transition flex items-center space-x-2 active:scale-95">
-                <i class="fa-solid fa-play"></i>
-                <span>Chạy Quy Trình Ngay</span>
-            </button>
+            <!-- Dropdown / Split Action for Running Steps -->
+            <div class="relative inline-block text-left" id="trigger-dropdown-container">
+                <div class="inline-flex rounded-xl shadow-lg shadow-rose-600/30">
+                    <button onclick="triggerWorkflow(1)" id="btn-trigger" class="px-4 py-2.5 rounded-l-xl font-medium text-sm bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white transition flex items-center space-x-2 active:scale-95">
+                        <i class="fa-solid fa-play"></i>
+                        <span>Chạy Quy Trình (Bước 1)</span>
+                    </button>
+                    <button onclick="toggleTriggerMenu(event)" id="btn-trigger-menu" class="px-3 py-2.5 rounded-r-xl border-l border-rose-500/40 font-medium text-sm bg-rose-600 hover:bg-rose-500 text-white transition flex items-center active:scale-95" title="Chọn bước khởi chạy">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </button>
+                </div>
+                <!-- Dropdown Menu -->
+                <div id="trigger-menu" class="hidden absolute right-0 mt-2 w-64 rounded-xl glass border border-slate-700 bg-slate-900/95 shadow-2xl p-2 z-50 space-y-1">
+                    <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">Chọn bước bắt đầu:</div>
+                    <button onclick="triggerWorkflow(1); hideTriggerMenu();" class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-indigo-600/30 hover:text-white flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-1 text-pink-400 w-4"></i>
+                        <div>
+                            <div class="font-semibold">Chạy từ Bước 1 (Toàn bộ)</div>
+                            <div class="text-[10px] text-slate-400">NotebookLM &rarr; Flow &rarr; MoviePy</div>
+                        </div>
+                    </button>
+                    <button onclick="triggerWorkflow(2); hideTriggerMenu();" class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-amber-600/30 hover:text-white flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-2 text-amber-400 w-4"></i>
+                        <div>
+                            <div class="font-semibold">Chạy từ Bước 2 (Google Flow)</div>
+                            <div class="text-[10px] text-slate-400">Dùng kịch bản có sẵn &rarr; Sinh clip &rarr; Ghép</div>
+                        </div>
+                    </button>
+                    <button onclick="triggerWorkflow(3); hideTriggerMenu();" class="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-200 hover:bg-emerald-600/30 hover:text-white flex items-center space-x-2 transition">
+                        <i class="fa-solid fa-3 text-emerald-400 w-4"></i>
+                        <div>
+                            <div class="font-semibold">Chạy lại Bước 3 (Ghép Video)</div>
+                            <div class="text-[10px] text-slate-400">Ghép clips đã tải + Lời thoại + Sub TikTok</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
             <button onclick="openSetupLogin()" class="px-4 py-2.5 rounded-xl font-medium text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i>
                 <span>Mở Chrome Profile</span>
@@ -182,10 +216,16 @@
                             </div>
                         </div>
                     </div>
-                    <button onclick="openDataInspector('step1')" class="mt-3 w-full py-1.5 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/50 text-indigo-300 hover:text-white border border-indigo-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
-                        <i class="fa-solid fa-code"></i>
-                        <span>Xem Kịch Bản & Voice</span>
-                    </button>
+                    <div class="space-y-1.5 mt-3">
+                        <button onclick="openDataInspector('step1')" class="w-full py-1.5 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/50 text-indigo-300 hover:text-white border border-indigo-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
+                            <i class="fa-solid fa-code"></i>
+                            <span>Xem Kịch Bản & Voice</span>
+                        </button>
+                        <button onclick="triggerWorkflow(1)" class="w-full py-1 rounded-lg bg-indigo-900/30 hover:bg-indigo-800/50 text-indigo-300 hover:text-white text-[11px] font-medium flex items-center justify-center space-x-1 transition border border-indigo-700/30">
+                            <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                            <span>Chạy lại từ Bước 1</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- NODE 2: Google Flow 3 Clips -->
@@ -208,10 +248,16 @@
                             </div>
                         </div>
                     </div>
-                    <button onclick="openDataInspector('step2')" class="mt-3 w-full py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 hover:text-white border border-amber-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
-                        <i class="fa-solid fa-circle-play"></i>
-                        <span>Xem & Phát 3 Clip 10s</span>
-                    </button>
+                    <div class="space-y-1.5 mt-3">
+                        <button onclick="openDataInspector('step2')" class="w-full py-1.5 rounded-lg bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 hover:text-white border border-amber-800/40 text-xs font-medium flex items-center justify-center space-x-1.5 transition">
+                            <i class="fa-solid fa-circle-play"></i>
+                            <span>Xem & Phát 3 Clip 10s</span>
+                        </button>
+                        <button onclick="triggerWorkflow(2)" class="w-full py-1 rounded-lg bg-amber-900/30 hover:bg-amber-800/50 text-amber-300 hover:text-white text-[11px] font-medium flex items-center justify-center space-x-1 transition border border-amber-700/30">
+                            <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                            <span>Chạy lại từ Bước 2</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- NODE 3: MoviePy 30s TikTok Video & Sẵn Sàng Đăng -->
@@ -239,10 +285,16 @@
                             <i class="fa-solid fa-play"></i>
                             <span>Xem Video 30s & Lấy Caption</span>
                         </button>
-                        <button onclick="copyCurrentCaption()" class="w-full py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-medium flex items-center justify-center space-x-1 transition">
-                            <i class="fa-regular fa-copy"></i>
-                            <span>Copy Tiêu Đề & Hashtags</span>
-                        </button>
+                        <div class="flex gap-1.5">
+                            <button onclick="triggerWorkflow(3)" class="flex-1 py-1 rounded-lg bg-emerald-900/30 hover:bg-emerald-800/50 text-emerald-300 hover:text-white text-[11px] font-medium flex items-center justify-center space-x-1 transition border border-emerald-700/30">
+                                <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                                <span>Chạy lại Bước 3</span>
+                            </button>
+                            <button onclick="copyCurrentCaption()" class="flex-1 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-medium flex items-center justify-center space-x-1 transition">
+                                <i class="fa-regular fa-copy"></i>
+                                <span>Copy Caption</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -505,22 +557,26 @@
             }
         }
 
-        function resetPipelineFlowchart() {
-            document.getElementById('df-topic').innerText = 'Chưa có';
-            document.getElementById('df-title').innerText = '--';
-            document.getElementById('df-prompts-count').innerText = '0 / 3';
-            document.getElementById('df-clips-count').innerText = '0 / 3 clip';
-            document.getElementById('df-filesize').innerText = '--';
-            document.getElementById('df-tiktok-status').innerText = 'Sẵn sàng';
-            document.getElementById('df-tiktok-percent').innerText = 'Chờ phát hành';
+        function resetPipelineFlowchart(fromStep = 1) {
+            if (fromStep <= 1) {
+                document.getElementById('df-topic').innerText = 'Chưa có';
+                document.getElementById('df-title').innerText = '--';
+                document.getElementById('df-prompts-count').innerText = '0 / 3';
+            }
+            if (fromStep <= 2) {
+                document.getElementById('df-clips-count').innerText = '0 / 3 clip';
+            }
+            if (fromStep <= 3) {
+                document.getElementById('df-filesize').innerText = '--';
+            }
 
-            for (let i = 1; i <= 4; i++) {
+            for (let i = fromStep; i <= 3; i++) {
                 updateNodeStatus(i, 'IDLE');
             }
             const overall = document.getElementById('overall-step-badge');
             if (overall) {
                 overall.className = 'text-xs font-semibold px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
-                overall.innerText = 'Đang khởi chạy...';
+                overall.innerText = fromStep === 1 ? 'Đang khởi chạy...' : `Đang chạy từ Bước ${fromStep}...`;
             }
         }
 
@@ -857,14 +913,14 @@
             }
         }
 
-        function resetSteps() {
-            for (let i = 1; i <= 3; i++) {
+        function resetSteps(fromStep = 1) {
+            for (let i = fromStep; i <= 3; i++) {
                 setStepStatus(i, 'pending');
             }
             const overall = document.getElementById('overall-step-badge');
             if (overall) {
                 overall.className = 'text-xs font-semibold px-2.5 py-1 rounded-md bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
-                overall.innerText = 'Đang khởi chạy...';
+                overall.innerText = fromStep === 1 ? 'Đang khởi chạy...' : `Đang chạy từ Bước ${fromStep}...`;
             }
         }
 
@@ -1158,19 +1214,47 @@
             modal.classList.remove('flex');
         }
 
-        async function triggerWorkflow() {
-            if (!confirm("Bạn muốn kích hoạt chạy quy trình tạo video và đăng TikTok ngay bây giờ?")) return;
+        function toggleTriggerMenu(e) {
+            if (e) e.stopPropagation();
+            const menu = document.getElementById('trigger-menu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        function hideTriggerMenu() {
+            const menu = document.getElementById('trigger-menu');
+            if (menu) menu.classList.add('hidden');
+        }
+
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('trigger-dropdown-container');
+            if (container && !container.contains(e.target)) {
+                hideTriggerMenu();
+            }
+        });
+
+        async function triggerWorkflow(fromStep = 1) {
+            const stepNames = {
+                1: "Bước 1 (Toàn bộ: NotebookLM -> Flow -> Ghép Video)",
+                2: "Bước 2 (Google Flow: Dùng kịch bản cũ -> Sinh 3 clip -> Ghép Video)",
+                3: "Bước 3 (Ghép Video: Dùng 3 clip đã tải -> Xuất video 30s + Sub TikTok)"
+            };
+            const label = stepNames[fromStep] || `Bước ${fromStep}`;
+            if (!confirm(`Bạn muốn kích hoạt chạy quy trình từ ${label}?`)) return;
             
-            // 1. NGAY LẬP TỨC XÓA LOG & RESET CÁC BƯỚC VÀ SƠ ĐỒ
+            // 1. NGAY LẬP TỨC XÓA LOG & RESET CÁC BƯỚC TƯƠNG ỨNG
             clearUiLogs();
-            resetSteps();
-            resetPipelineFlowchart();
+            resetSteps(fromStep);
+            resetPipelineFlowchart(fromStep);
             
             const terminal = document.getElementById('terminal-content');
-            terminal.innerHTML = '<div class="text-indigo-400 font-medium italic py-1"><i class="fa-solid fa-spinner fa-spin mr-2"></i>[Hệ thống] Đang bắt đầu chạy quy trình mới... Đã reset 4 bước và xóa toàn bộ log cũ.</div>';
+            terminal.innerHTML = `<div class="text-indigo-400 font-medium italic py-1"><i class="fa-solid fa-spinner fa-spin mr-2"></i>[Hệ thống] Đang bắt đầu chạy quy trình từ Bước ${fromStep}... Đã reset các bước tương ứng.</div>`;
 
             try {
-                const res = await fetch('/api/trigger', { method: 'POST' });
+                const res = await fetch('/api/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ from_step: fromStep })
+                });
                 const data = await res.json();
                 fetchStatus();
                 fetchLogs();

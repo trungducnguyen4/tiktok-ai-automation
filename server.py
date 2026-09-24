@@ -183,27 +183,43 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 self.wfile.write(json.dumps({"message": "Quy trình đang chạy dở!"}).encode("utf-8"))
                 return
 
-            logger.clear_logs()
-            pipeline_state.reset_pipeline_data()
-            latest_execution_state["status"] = "RUNNING"
-            latest_execution_state["step"] = 1
+            from_step = 1
+            content_length = int(self.headers.get("Content-Length", 0))
+            if content_length > 0:
+                try:
+                    body = self.rfile.read(content_length)
+                    payload = json.loads(body.decode("utf-8"))
+                    from_step = int(payload.get("from_step", 1))
+                except Exception:
+                    pass
+            else:
+                query = urllib.parse.parse_qs(parsed.query)
+                if "from_step" in query:
+                    try: from_step = int(query["from_step"][0])
+                    except Exception: pass
 
-            def run_job():
+            latest_execution_state["status"] = "RUNNING"
+            latest_execution_state["step"] = from_step
+
+            def run_job(step):
                 global latest_execution_state
-                res = execute_daily_pipeline(headless=False)
+                res = execute_daily_pipeline(from_step=step, headless=False)
                 latest_execution_state["status"] = "FINISHED"
                 latest_execution_state["last_run"] = res.get("start_time")
                 latest_execution_state["last_result"] = res
                 # Cập nhật lại auth sau khi chạy
                 threading.Thread(target=update_auth_async).start()
 
-            t = threading.Thread(target=run_job)
+            t = threading.Thread(target=run_job, args=(from_step,))
             t.start()
 
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.end_headers()
-            self.wfile.write(json.dumps({"message": "Đã bắt đầu chạy quy trình!"}, ensure_ascii=False).encode("utf-8"))
+            self.wfile.write(json.dumps({
+                "message": f"Đã bắt đầu chạy quy trình từ Bước {from_step}!",
+                "from_step": from_step
+            }, ensure_ascii=False).encode("utf-8"))
             return
 
         elif parsed.path == "/api/setup-login":
